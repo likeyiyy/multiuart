@@ -8,6 +8,7 @@
 #ifndef H_LLOG_H
 #define H_LLOG_H
 
+#include <stdlib.h>
 
 typedef  enum LogLevel {  
     LL_DEBUG =   5,

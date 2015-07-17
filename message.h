@@ -12,10 +12,16 @@
 #include <stdint.h>
 typedef struct 
 {
-    uint8_t  index;
+    char name[16];
+    char cmd[16];
     uint16_t length;
     uint8_t * data;
     struct timeval stamp;
 }message_t;
+
+message_t * make_message(int index, uint8_t * recv_buf, int length);
+message_t * deserialized_message(uint8_t * recv_buf, int length);
+int serialized_message(message_t * message, uint8_t * buffer, int * length);
+void free_message(message_t * message);
 
 #endif

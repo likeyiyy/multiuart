@@ -5,13 +5,21 @@
 	> Created Time: Fri 23 Jan 2015 02:45:48 PM CST
  ************************************************************************/
 #include "multiuart_common.h"
+#include "config.h"
 #define SERIALIZE_MASK      0x1
 #define SERIALIZE_LOCK_MASK 0x2
+
 typedef struct
 {
-    socket_uart_t * so_uart;
-    int fd;
+    uart_dev_t * devs;
+    int dev_nums;
+    queue_t * send_queue;
+    int configed;
 }socket_context_t;
+
+static socket_context_t socket_context_body;
+static socket_context_t * socket_context = &socket_context_body;
+
 
 void * socket_view_state(void * arg)
 {
@@ -60,57 +68,7 @@ void * socket_view_state(void * arg)
         sleep(1);
     }
 }
-int socket_uart_init(socket_uart_t * socket_uart, int dev_nums, char ** devs_name, uint8_t *devs_flag)
-{
-    assert(socket_uart);
-    assert(devs_name);
-    assert(*devs_name);
-    socket_uart->bucket = malloc(dev_nums * sizeof(bucket_t));
-    assert(socket_uart->bucket);
-    socket_uart->bucket_num = dev_nums;
-    socket_uart->send_queue = memalign(64, sizeof(mwsr_queue_t));
-    assert(socket_uart->send_queue);
-
-    socket_uart->recv_queue = memalign(64, sizeof(mwsr_queue_t));
-    assert(socket_uart->recv_queue);
-
-    mwsr_queue_init(socket_uart->send_queue);
-    socket_uart->fds = malloc(sizeof(int) * dev_nums);
-    exit_if_ptr_is_null(socket_uart->fds,"socket_uart fds malloc error");
-    socket_uart->fds_flag = malloc(sizeof(uint8_t) * dev_nums);
-    exit_if_ptr_is_null(socket_uart->fds_flag,"socket_uart fds_flag malloc error");
-    socket_uart->fds_lock = malloc(sizeof(pthread_mutex_t) * dev_nums);
-    exit_if_ptr_is_null(socket_uart->fds_lock,"socket_uart fds_lock malloc error");
-    socket_uart->devs_name = malloc(sizeof(char *) * dev_nums);
-    exit_if_ptr_is_null(socket_uart->devs_name,"socket_uart dev_nums malloc error");
-    socket_uart->fd_nums = dev_nums;
-    for(int i = 0; i < dev_nums; i++)
-    {
-        pthread_mutex_init(&socket_uart->fds_lock[i],NULL);
-        socket_uart->devs_name[i] = malloc(strlen(devs_name[i] + 1));
-        assert(socket_uart->devs_name[i]);
-        strcpy(socket_uart->devs_name[i],devs_name[i]);
-        socket_uart->fds[i] = init_uart_device(devs_name[i]);
-        socket_uart->fds_flag[i] = devs_flag[i];
-        INIT_LIST_HEAD(&socket_uart->bucket[i].list); 
-        pthread_mutex_init(&socket_uart->bucket[i].lock, NULL);
-        socket_uart->bucket[i].count = 0;
-    }
-    pthread_t view;
-    pthread_create(&view,
-                  NULL,
-                  socket_view_state,
-                  socket_uart);
-    for(int i = 0; i < dev_nums; i++)
-    {
-        if(socket_uart->fds[i] < 0)
-        {
-            return -1;
-        }
-    }
-    return 0;
-}
-int open_server_socket(const char * domain_file)
+static int open_server_socket(const char * domain_file)
 {
     int listen_fd;  
     int ret;  
@@ -159,7 +117,7 @@ void * UartSendWorker(void * arg)
     struct timeval now;
     while(1)
     {
-        while(mwsr_queue_dequeue(so_uart->send_queue,(void **)&message) != 0)
+        while(queue_dequeue(so_uart->send_queue,(void **)&message) != 0)
         {
             usleep(1000);
             continue;
@@ -183,7 +141,7 @@ void * UartSendWorker(void * arg)
             }
             else
             {
-                mwsr_queue_enqueue(so_uart->send_queue,message);
+                queue_enqueue(so_uart->send_queue,message);
             }
         }
         else
@@ -195,10 +153,20 @@ void * UartSendWorker(void * arg)
     }
     return NULL;
 }
-// 用双守护进程吧，出错还是直接退出。
-void * UartSendManager(void * arg)
+
+static int isInvalidTitle(char * title)
 {
-    socket_uart_t * so_uart = (socket_uart_t *)arg;
+    return strncmp(title,"multiuart",sizeof("multiuart"));
+}
+
+static int isInvalidName(char * name)
+{
+
+}
+
+void * socket_uart_send_manager(void * arg)
+{
+    socket_context_t * context = (socket_context_t *)arg;
     int listen_fd = open_server_socket(UNIX_SOCKET_UART_SEND);
     int com_fd;  
     socklen_t len;  
@@ -226,9 +194,22 @@ void * UartSendManager(void * arg)
         {
             LOG_ERROR("[%s] Read Error\n",__func__);
         }
+        if(isInvalidTitle(recv_buf))
+        {
+            ProcessMessageInvalidTitle(fd);
+            close(fd);
+            continue;
+        }
+        message_t * message = deserialized_message(recv_buf,n);
+        if(isInvalidName(message->name))
+        {
+            ProcessMessageInvalidTitle(message->name);
+        }
+        else
+        {
+            queue_enqueue(context->send_queue, message);
+        }
         close(fd);
-        mwsr_queue_enqueue(so_uart->send_queue,
-                           deserialized_message(recv_buf, n));
     }
     return NULL;
 }
@@ -288,11 +269,12 @@ void * UartRecvWorker(void * arg)
                     int length = _read_from_uart(so_uart,i,buffer);
                     if(length > 0)
                     {
+                        //FIXME
                         if(so_uart->fds_flag[i] & SERIALIZE_MASK)
                         {
                             pthread_mutex_unlock(&so_uart->fds_lock[i]);
                         }
-                        mwsr_queue_enqueue(so_uart->send_queue,
+                        queue_enqueue(so_uart->send_queue,
                                            make_message(i, buffer, length));
                     }
                 }
@@ -328,6 +310,7 @@ static inline int compare_blist(struct blist * node, recv_header_t * recv_header
     }
     return 1;
 }
+#if 0
 void * handler_uart_recv(void * arg)
 {
     pthread_detach(pthread_self());
@@ -412,7 +395,8 @@ void * handler_uart_recv(void * arg)
     close(fd);
     return NULL;
 }
-void * UartRecvManager(void * arg)
+#endif
+void * socket_uart_recv_manager(void * arg)
 {
     socket_uart_t * so_uart = (socket_uart_t *)arg;
     int listen_fd = open_server_socket(UNIX_SOCKET_UART_RECV);
@@ -429,7 +413,7 @@ void * UartRecvManager(void * arg)
     {
         int length = MAX_BUFSIZ;
         /* 这里的recvmanager 不再接受任何来自app的请求，而是对libmultiuart服务的。*/
-        while(mwsr_queue_dequeue(so_uart->recv_queue,(void **)&message) != 0)
+        while(queue_dequeue(so_uart->recv_queue,(void **)&message) != 0)
         {
             usleep(1000);
             continue;
@@ -441,10 +425,38 @@ void * UartRecvManager(void * arg)
             continue;
         }
         serialized_message(message, buffer, &length);
-
-
+        //FIXME
         usleep(1000);
     }
     return NULL;
-    return NULL;
+}
+int socket_uart_init(socket_context_t * context, config_t * config)
+{
+    VERIFY(context,"socket context is NULL");
+    VERIFY(config,"socket config is NULL");
+    VERIFY(config->devs,"config devs is NULL");
+
+    context->devs = malloc(sizeof(uart_dev_t) * config->dev_nums);
+    context->dev_nums = config->dev_nums;
+    context->send_queue = queue_init(8,TMC_QUEUE_SINGLE_RECEIVER);
+
+    for(int i = 0; i < config->dev_nums; i++)
+    {
+        strcpy(context->devs[i].name,config->devs[i].name);
+        context->devs[i].rbaud = config->devs[i].rbaud;
+        strcpy(context->devs[i].protocol,config->devs[i].protocol);
+        if(!strcmp(context->devs[i].protocol,"raw"))
+        {
+            context->devs[i].flags = 1;
+        }
+        pthread_mutex_init(&context->devs[i].serial_lock, NULL);
+        context->devs[i].recv_queue = queue_init(8,
+                                                 TMC_QUEUE_SINGLE_RECEIVER);
+        context->devs[i].fd = init_uart_device(&context->devs[i]);
+        if(context->devs[i].fd < 0)
+        {
+            LOG_ERROR("%s open failed",context->devs[i].name);
+        }
+    }
+    context->configed = 1;
 }

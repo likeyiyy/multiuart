@@ -7,7 +7,9 @@
 
 #ifndef _UART_SOCKET_H
 #define _UART_SOCKET_H
+
+
 int    socket_uart_init();
-void * UartSendManager(void * arg);
-void * UartRecvManager(void * arg);
+void * socket_uart_send_manager(void * arg);
+void * socket_uart_recv_manager(void * arg);
 #endif

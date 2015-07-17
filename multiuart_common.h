@@ -47,7 +47,7 @@ extern uint32_t request_size ;
 
 #include "queue.h"
 #define LG2_CAPACITY 8
-INTEL_QUEUE(mwsr_queue, void *, LG2_CAPACITY, (TMC_QUEUE_SINGLE_SENDER));
+INTEL_QUEUE(queue, void *, LG2_CAPACITY, (TMC_QUEUE_SINGLE_SENDER));
 #include "list.h"
 
 typedef struct 
@@ -90,8 +90,8 @@ typedef struct
     pthread_mutex_t * fds_lock;
     int fd_nums;
     char ** devs_name;
-    mwsr_queue_t * send_queue;
-    mwsr_queue_t * recv_queue;
+    queue_t * send_queue;
+    queue_t * recv_queue;
     bucket_t * bucket;
     int bucket_num;
 }socket_uart_t;

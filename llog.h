@@ -50,13 +50,14 @@ int llog(LogLevel level, char * logformat, ...);
                                              __FILE__, __LINE__, __FUNCTION__, ##log_arg); \
             } while (0) 
 
-#define VERIFY(VAL,WHAT)                        \
-        do{                                     \
-            if(!(VAL))                          \
-            {                                   \
-                LOG_ERROR(WHAT);                \
-                exit(-1);                  \
-            }                                   \
+#define VERIFY(VAL, log_fmt, log_arg...)                                                    \
+        do{                                                                                \
+            if(!(VAL))                                                                     \
+            {                                                                              \
+                llog(LL_ERROR,   "[%s:%d][%s] " log_fmt,                                   \
+                                             __FILE__, __LINE__, __FUNCTION__, ##log_arg); \
+                exit(-1);                                                                  \
+            }                                                                              \
         } while(0)                          
 
 #endif

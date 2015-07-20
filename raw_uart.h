@@ -14,6 +14,7 @@ typedef struct _uart_dev
     pthread_mutex_t serial_lock;
     queue_t * recv_queue;
     unsigned char buffer[3000];
+    int cur_index;
 }uart_dev_t;
 
 int raw_uart_send(int fd, message_t * message);

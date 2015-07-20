@@ -45,10 +45,9 @@
 
 extern uint32_t request_size ;
 
-#include "queue.h"
-#define LG2_CAPACITY 8
-INTEL_QUEUE(queue, void *, LG2_CAPACITY, (TMC_QUEUE_SINGLE_SENDER));
 #include "list.h"
+#include "message.h"
+#include "queue.h"
 
 typedef struct 
 {
@@ -75,26 +74,6 @@ typedef struct
     uint8_t index;
     message_t * message;
 }__attribute__((__packed__)) packet_t;
-
-
-typedef struct bucket { 
-    struct list_head list;
-    pthread_mutex_t  lock;
-    uint32_t count;
-} bucket_t; 
-
-typedef struct 
-{
-    int * fds;
-    unsigned char * fds_flag;
-    pthread_mutex_t * fds_lock;
-    int fd_nums;
-    char ** devs_name;
-    queue_t * send_queue;
-    queue_t * recv_queue;
-    bucket_t * bucket;
-    int bucket_num;
-}socket_uart_t;
 
 typedef struct
 {

@@ -46,23 +46,17 @@ int main(int argc, char ** argv)
         printf("device%d : %s\n",i,devs_name[i]);
     }
     
-    socket_uart_t * sock_uart = malloc(sizeof(socket_uart_t));
-    if(socket_uart_init(sock_uart,dev_nums,devs_name) != 0)
-    {
-        printf("[%s-%s] socket uart init error\n",__func__,"socket_uart_init");
-    }
-
     pthread_t send_deamon,recv_deamon;
 
     pthread_create(&send_deamon,
             NULL,
-            UartSendManager,
-            sock_uart);
+            socket_uart_send_manager,
+            NULL);
 
     pthread_create(&recv_deamon,
             NULL,
-            UartRecvManager,
-            sock_uart);
+            socket_uart_recv_manager,
+            NULL);
 
     while(1)
     {

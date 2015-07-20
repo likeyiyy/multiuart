@@ -77,7 +77,7 @@ int _ipmi_parser(uart_dev_t * dev, int * start )
             }
             VERIFY((counter <= length), "[%s] ipmi counter and length should be same", dev->name);
             message_t * message = make_message(dev->name, buffer, counter);
-            view_message(message);
+            //view_message(message);
             queue_enqueue(dev->recv_queue,message);
             clear_buffer(dev, start_index, end_index);
             free(buffer);
@@ -126,7 +126,7 @@ int main( int argc, char ** argv )
 {
     llog_init(LL_DEBUG,stdout);
     uart_dev_t * dev = malloc(sizeof(uart_dev_t));
-    strcpy(dev->name,  "/dev/ttyUSB1");
+    strcpy(dev->name,  "/dev/ttyUSB2");
     strcpy(dev->buffer,"a1234567ldi7654321dfiiiiiiiiiiifs"
                         "ldfjalkjfalfjldajfldfja;lfja;fjkal;fja;fjka;fda;;asf"
                         "jlafjalffasldfhafhafhowfhlsdafhlkasfhsdlkafhaklfhalfh"

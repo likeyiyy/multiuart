@@ -6,6 +6,9 @@
  ************************************************************************/
 #include "multiuart_common.h"
 #include "config.h"
+#include "protocol/ipmi_protocol.h"
+#include "protocol/raw_protocol.h"
+#include "protocol/proto_manager.h"
 #define SERIALIZE_MASK      0x1
 #define SERIALIZE_LOCK_MASK 0x2
 
@@ -20,54 +23,6 @@ typedef struct
 static socket_context_t socket_context_body;
 static socket_context_t * context = &socket_context_body;
 
-
-void * socket_view_state(void * arg)
-{
-    socket_uart_t * so_uart = (socket_uart_t *)arg;
-    bucket_t * bucket  = NULL;
-    struct timeval now;
-    while(1)
-    {
-        for(int i = 0; i < so_uart->bucket_num; i++)
-        {
-            bucket = &so_uart->bucket[i];
-            LOG_DEBUG("bucket[%d] list length: %d\n",i,so_uart->bucket[i].count);
-            pthread_mutex_lock(&bucket->lock);
-            {
-                struct list_head * p, * list;
-                struct blist * node;
-                struct list_head * next;
-                list = &bucket->list;
-                gettimeofday(&now, NULL);
-                /* 在某个列表里查找，找不到就返回一个找不到的值 */
-                list_for_each_safe(p, next, list)
-                {   
-                    node = list_entry(p,struct blist,listhead); 
-                    message_t * message = (message_t *)node->data;
-                    if((now.tv_sec - message->stamp.tv_sec) >= 10)
-                    {
-                        list_del(&node->listhead);
-                        --bucket->count;
-                        break;
-                    }
-                }  
-            }
-            pthread_mutex_unlock(&bucket->lock);
-#if 1
-            struct list_head * p;
-            struct blist * node;
-            list_for_each(p, &so_uart->bucket[i].list)
-            {
-                node = list_entry(p,struct blist,listhead); 
-                message_t * message = (message_t *)node->data;
-                LOG_DEBUG("[%s] data:%p, length:%d\n",__func__,message->data,message->length);
-                print_buf(message->data, message->length);
-            }
-#endif
-        }
-        sleep(1);
-    }
-}
 static int open_server_socket(const char * domain_file)
 {
     int listen_fd;  
@@ -192,6 +147,11 @@ static inline void ProcessMessageInvalidMessage(int client)
     write(client,"InvalidMessage",strlen("InvalidMessage") + 1);
 }
 
+static inline void ProcessMessageSucceed(int client)
+{
+    write(client,"SucceedMessage",strlen("SucceedMessage") + 1);
+}
+
 static uart_dev_t * get_dev_by_name(char * name)
 {
     for(int i = 0; i < context->dev_nums; i++)
@@ -244,7 +204,6 @@ void * socket_uart_send_manager(void * arg)
         {
             ProcessMessageInvalidMessage(com_fd);
             close(com_fd);
-            continue;
         }
         else
         {
@@ -254,15 +213,15 @@ void * socket_uart_send_manager(void * arg)
 	        {
 	            ProcessMessageInvalidName(com_fd, message->name);
 	            close(com_fd);
-	            continue;
 	        }
 	        else
 	        {
                 message->dev = dev;
 	            queue_enqueue(context->send_queue, message);
+                ProcessMessageSucceed(com_fd);
+                close(com_fd);
 	        }
         }
-        close(com_fd);
     }
     return NULL;
 }
@@ -316,18 +275,8 @@ void * UartRecvWorker(void * arg)
             {
                 if(FD_ISSET(context->devs[i].fd, &readfds))
                 {
-                    int length = _read_from_uart(&context->devs[i]);
-                    if(length > 0)
-                    {
-                        recv_handler_get_by_name(context->devs[i].protocol);
-                        //FIXME
-                        if(so_uart->fds_flag[i] & SERIALIZE_MASK)
-                        {
-                            pthread_mutex_unlock(&so_uart->fds_lock[i]);
-                        }
-                        queue_enqueue(so_uart->send_queue,
-                                           make_message(i, buffer, length));
-                    }
+                    RecvHandler * ProcessRecv = get_recv_handler_by_protocol(context->devs[i].protocol);
+                    ProcessRecv->func(&context->devs[i]);                    
                 }
             }
         }
@@ -449,35 +398,41 @@ void * handler_uart_recv(void * arg)
 #endif
 void * socket_uart_recv_manager(void * arg)
 {
-    socket_uart_t * so_uart = (socket_uart_t *)arg;
     int listen_fd = open_server_socket(UNIX_SOCKET_UART_RECV);
     pthread_t real_recv;
     int result = pthread_create(&real_recv,
                                 NULL,
                                 UartRecvWorker,
-                                so_uart);
+                                NULL);
     assert(result == 0);
+    int len = -1;
+    struct sockaddr_un clt_addr;  
+    int com_fd = -1;
     message_t * message ;
     struct timeval now;
     uint8_t buffer[MAX_BUFSIZ];
     while(1)
     {
-        int length = MAX_BUFSIZ;
-        /* 这里的recvmanager 不再接受任何来自app的请求，而是对libmultiuart服务的。*/
-        while(queue_dequeue(so_uart->recv_queue,(void **)&message) != 0)
+        len = sizeof(clt_addr);  
+        com_fd = accept(listen_fd,(struct sockaddr*)&clt_addr,&len);  
+        if(com_fd < 0)  
+        {  
+            perror("cannot accept client connect request");  
+            close(listen_fd);  
+            unlink(UNIX_SOCKET_UART_SEND);  
+            exit(-1);
+        }  
+        int n = 0;
+        char recv_buf[MAX_BUFSIZ];   
+        if( (n = read(com_fd,recv_buf,sizeof(recv_buf))) < 0)
         {
-            usleep(1000);
-            continue;
+            LOG_ERROR("[%s] Read Error\n",__func__);
         }
-        gettimeofday(&now,NULL);
-        if((now.tv_sec - message->stamp.tv_sec) > 10)
+        if(isInvalidMessage(recv_buf, n))
         {
-            free_message(message);
-            continue;
+            ProcessMessageInvalidMessage(com_fd);
+            close(com_fd);
         }
-        serialized_message(message, buffer, &length);
-        //FIXME
-        usleep(1000);
     }
     return NULL;
 }
@@ -501,8 +456,7 @@ int socket_uart_init(config_t * config)
             context->devs[i].flags = 1;
         }
         pthread_mutex_init(&context->devs[i].serial_lock, NULL);
-        context->devs[i].recv_queue = queue_init(8,
-                                                 TMC_QUEUE_SINGLE_RECEIVER);
+        context->devs[i].recv_queue = queue_init(8, TMC_QUEUE_SINGLE_RECEIVER);
         context->devs[i].cur_index = 0;
         context->devs[i].fd = init_uart_device(&context->devs[i]);
         if(context->devs[i].fd < 0)

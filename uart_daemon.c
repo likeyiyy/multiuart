@@ -6,34 +6,23 @@
  ************************************************************************/
 
 #include "multiuart_common.h"
+#include "config.h"
+#include "raw_uart.h"
+#include "protocol/ipmi_protocol.h"
+#include "protocol/raw_protocol.h"
+#include "protocol/proto_manager.h"
 int main(int argc, char ** argv)
 {
-    int dev_nums = 0;
-    char ** devs_name = NULL;
+    char config_file [256] = { 0 };
+    int config_flag = 0;
+    config_t config;
     for(int i = 1; i < argc; i++)
     {
         char * arg = argv[i];
-
-        if(!strcmp(arg, "--dev_nums") && i + 1 < argc)
+        if((!strcmp(arg, "-c") || !strcmp(arg,"--config")) && i + 1 < argc)
         {
-            dev_nums = atoi(argv[i++]);
-        }
-    }
-    for(int i = 1; i < argc; i++)
-    {
-        char * arg = argv[i];
-        if(!strcmp(arg, "--dev") && i + 1 < argc)
-        {
-            devs_name = malloc(dev_nums * sizeof(char *));
-            for(int j = 0; j < dev_nums; j++)
-            {
-                devs_name[j] = malloc(strlen(argv[++i]) + 1);
-                strcpy(devs_name[j],argv[i]);
-            }
-        }
-        else if(!strcmp(arg, "--dev_nums") && i + 1 < argc)
-        {
-            dev_nums = atoi(argv[++i]);
+            config_flag = 1;
+            strcpy(config_file, argv[++i]);
         }
         else
         {
@@ -41,13 +30,20 @@ int main(int argc, char ** argv)
             exit(-1);
         }
     }
-    for(int i = 0; i < dev_nums; i++)
+    if(config_flag == 1)
     {
-        printf("device%d : %s\n",i,devs_name[i]);
+        read_config_file(config_file, &config);
     }
+    else
+    {
+        LOG_ERROR("[MULTIUART]: You must specify the configuration file");
+    }
+
+    register_recv_handler("ipmi",ipmi_recv_handler);
+    register_recv_handler("raw", raw_recv_handler);
+    
     
     pthread_t send_deamon,recv_deamon;
-
     pthread_create(&send_deamon,
             NULL,
             socket_uart_send_manager,

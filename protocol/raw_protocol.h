@@ -7,4 +7,6 @@
 
 #ifndef _RAW_PROTOCOL_H
 #define _RAW_PROTOCOL_H
+
+int raw_recv_handler(uart_dev_t * dev);
 #endif

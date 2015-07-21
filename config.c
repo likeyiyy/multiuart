@@ -107,12 +107,31 @@ int read_config_file(char * filename, config_t * config)
 
     /* 1. get file length */
     int file_length = get_file_length(fp);
+    char * temp   = malloc(file_length + 1);
     char * buffer = malloc(file_length + 1);
     VERIFY(buffer,"malloc buffer failed");
     /* 2. read to buffer */
     int result = fread(buffer, 1, file_length, fp);
     VERIFY(result == file_length, "read config file error");
     buffer[file_length + 1] = '\0';
+    int counter = 0;
+    for(int i = 0; i < file_length; i++)
+    {
+        if(buffer[i] != '#')
+        {
+            temp[counter++] = buffer[i];
+        }
+        else
+        {
+            while(buffer[i] != '\n')
+            {
+                i++;
+            }
+            temp[counter++] = buffer[i];
+        }
+    }
+    buffer = temp;
+    file_length = strlen(temp);
 
     /* 3. get_dev_nums  */
     int dev_nums = get_dev_nums(buffer, file_length);
@@ -122,8 +141,7 @@ int read_config_file(char * filename, config_t * config)
     VERIFY(config->devs,"config devs alloc failed");
 
     /* 4. get every dev config */
-    get_dev_config_from_buffer(config,buffer,file_length);
-
+    get_dev_config_from_buffer(config, buffer, file_length);
     return 0;
 }
 

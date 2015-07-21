@@ -17,6 +17,7 @@ int main(int argc, char ** argv)
     char config_file [256] = { 0 };
     int config_flag = 0;
     config_t config;
+    llog_init(LL_DEBUG, stdout);
     for(int i = 1; i < argc; i++)
     {
         char * arg = argv[i];
@@ -31,20 +32,15 @@ int main(int argc, char ** argv)
             exit(-1);
         }
     }
-    if(config_flag == 1)
-    {
-        read_config_file(config_file, &config);
-    }
-    else
-    {
-        LOG_ERROR("[MULTIUART]: You must specify the configuration file");
-    }
-    llog_init(LL_DEBUG, stdout);
+    VERIFY(config_flag,"[MULTIUART]: You must specify the configuration file");
+    read_config_file(config_file, &config);
 
     register_uart_recv_handler("ipmi",ipmi_uart_recv_handler);
     register_uart_recv_handler("raw", raw_uart_recv_handler);
     register_socket_recv_handler("ipmi",ipmi_socket_recv_handler);
     register_socket_recv_handler("raw", raw_socket_recv_handler);
+
+    socket_uart_init(&config);
     
     
     pthread_t send_deamon,recv_deamon;

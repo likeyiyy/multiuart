@@ -15,7 +15,7 @@ int init_uart_device(uart_dev_t * dev)
 	fd = open(dev->name, O_RDWR);
 	if (fd < 0)
 	{
-		LOG_ERROR("[MULTIUART]: Open the device %s failed: %s\n",
+		LOG_ERROR("[MULTIUART]: Open the device %s failed: %s",
 				 dev->name, strerror(errno));
 		return -1;
 	}
@@ -23,7 +23,7 @@ int init_uart_device(uart_dev_t * dev)
 	result = tcgetattr(fd, &ts);
 	if (result)
 	{
-		LOG_ERROR("[MULTIUART]: Get the attribute of device %s failed: %s\n",
+		LOG_ERROR("[MULTIUART]: Get the attribute of device %s failed: %s",
 				 dev->name, strerror(errno));
 		return -1;		
 	}
@@ -35,14 +35,14 @@ int init_uart_device(uart_dev_t * dev)
 	    result = cfsetispeed(&ts, B115200); 
 	    if (result)
     	{
-    		printf("[MULTIUART]: Set the input Baul rate %d failed: %s\n",
+    		LOG_ERROR("[MULTIUART]: Set the input Baul rate %d failed: %s",
     				 rbaud, strerror(errno));
     		return -1;
     	}
     	result = cfsetospeed(&ts, B115200); 
     	if (result) 
     	{
-    		printf("[MULTIUART]: Set the output Baul rate %d failed: %s\n",
+    		LOG_ERROR("[MULTIUART]: Set the output Baul rate %d failed: %s",
     				 rbaud, strerror(errno));
     		return -1;
     	}
@@ -52,14 +52,14 @@ int init_uart_device(uart_dev_t * dev)
 	    result = cfsetispeed(&ts, B9600); 
 	    if (result)
     	{
-    		printf("[MULTIUART]: Set the input Baul rate %d failed: %s\n",
+    		LOG_ERROR("[MULTIUART]: Set the input Baul rate %d failed: %s",
     				 rbaud, strerror(errno));
     		return -1;
     	}
     	result = cfsetospeed(&ts, B9600); 
     	if (result) 
     	{
-    		printf("[MULTIUART]: Set the output Baul rate %d failed: %s\n",
+    		LOG_ERROR("[MULTIUART]: Set the output Baul rate %d failed: %s",
     				 rbaud, strerror(errno));
     		return -1;
     	}
@@ -75,8 +75,8 @@ int init_uart_device(uart_dev_t * dev)
     ts.c_iflag &= ~(IXON | IXOFF | IXANY);
     ts.c_cflag |= (CLOCAL | CREAD);
     tcsetattr(fd, TCSANOW, &ts);
-	printf("[MULTIUART]: Host is ready to test the rbaud: %d\n",
-    			 rbaud);
+	LOG_NOTICE("[MULTIUART]: %s is ready to test the rbaud: %d",
+    			 dev->name, rbaud);
     return fd;
 }  
 void uart_recv_enqueue(uart_dev_t * device, message_t * message)

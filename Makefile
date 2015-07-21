@@ -1,19 +1,20 @@
 # Default target.
 all:
 
-ifdef TILERA_ROOT
+ifndef TILERA_ROOT
 
 CC = $(TILERA_ROOT)/bin/tile-cc
 TILE_MONITOR = $(TILERA_ROOT)/bin/tile-monitor
 PARALLELIZE = $(TILERA_ROOT)/bin/parallelize
+LIBS = -lgxio -lpthread
 else
 
 CC = gcc
+LIBS = -lpthread
 
 endif
 
 CFLAGS = -std=gnu99 -Wall -g $(OPT) -I./ -I./protocol
-LIBS = -lgxio -lpthread
 
 SRCS = uart_daemon.c socket_uart.c raw_uart.c llog.c \
 	   message.c queue.c protocol/ipmi_protocol.c \

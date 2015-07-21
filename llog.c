@@ -43,12 +43,14 @@ int llog_init(LogLevel level, FILE * fp)
     return 0;
 }
 
-char loglevel[6][10] = {"",
-                        "[ERROR] ",
+char loglevel[6][20] = {"",
+                        "[ERROR  ] ",
                         "[WARNING] ",
-                        "[NOTICE] ",
-                        "[TRACE] ",
-                        "[DEBUG] "};
+                        "[NOTICE ] ",
+                        "[TRACE  ] ",
+                        "[DEBUG  ] "
+                       };
+
 static char * getLogLevel(LogLevel level)
 {
     if(level > LL_DEBUG || level < LL_ERROR)

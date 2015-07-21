@@ -38,10 +38,10 @@ static inline int strchrtimes(uint8_t * buffer, int length, uint8_t chr)
 }
 void view_message(message_t * message)
 {
-    printf("Title:  %s\n",message->title);
-    printf("Name:   %s\n",message->name);
-    printf("Length: %d\n",message->length);
-    printf("Stamp:  %lu.%lu\n",message->stamp.tv_sec, message->stamp.tv_usec);
+    LOG_NOTICE("Title:  %s",message->title);
+    LOG_NOTICE("Name:   %s",message->name);
+    LOG_NOTICE("Length: %d",message->length);
+    LOG_NOTICE("Stamp:  %lu.%lu",message->stamp.tv_sec, message->stamp.tv_usec);
     for(int i = 0; i < message->length; i++)
     {
         if(i && i % 16 == 0)
@@ -100,13 +100,13 @@ int main( int argc, char ** argv )
     llog_init(LL_NOTICE, stdout);
     char buffer[1024];
     char data[] = "hello world I am very happy with you now, and soon, but hahah eryi.";
-    sprintf(buffer,"multiuart#/dev/ttyUSB2#%d#%s",strlen(data),data);
+    sLOG_NOTICE(buffer,"multiuart#/dev/ttyUSB2#%d#%s",strlen(data),data);
     int length    = strlen(buffer);
-    printf("%s\n",buffer);
+    LOG_NOTICE("%s\n",buffer);
     message_t * message =  deserialized_message(buffer, length);
     view_message(message);
     char buffer2[1024];
     serialized_message(message, buffer2, &length);
-    printf("%s:%d\n",buffer2,length);
+    LOG_NOTICE("%s:%d\n",buffer2,length);
 }
 #endif

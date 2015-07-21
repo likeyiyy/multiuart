@@ -73,7 +73,6 @@ typedef struct
 
 typedef struct
 {
-    uint8_t index;
     uint8_t slaver_addr;
     uint8_t master_addr;
     uint8_t function;
@@ -84,7 +83,7 @@ typedef struct
 typedef struct 
 {
     uint8_t start;
-    uint8_t slave_addr;
+    uint8_t slaver_addr;
     uint8_t netfn_rslun;
     uint8_t head_checksum;
     uint8_t master_addr;

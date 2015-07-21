@@ -29,7 +29,7 @@ static int open_server_socket(const char * domain_file)
     int ret;  
     struct sockaddr_un srv_addr;  
     unlink(domain_file);  
-    listen_fd=socket(PF_UNIX,SOCK_STREAM,0);  
+    listen_fd = socket(PF_UNIX,SOCK_STREAM,0);  
     if(listen_fd < 0)  
     {  
         perror("cannot create communication socket");  
@@ -81,11 +81,9 @@ static void * uart_send_worker(void * arg)
             free_message(message);
             continue;
         }
-        LOG_DEBUG("[%s] data:%p, length:%d\n",
+        LOG_DEBUG("[%s] data:%p, length:%d",
                   __func__,
                   message->data,
-                  message->length);
-        print_buf(message->data, 
                   message->length);
         //此串口需要串口化
         uart_dev_t * dev = (uart_dev_t *)message->dev;
@@ -128,12 +126,14 @@ static inline int strchrtimes(char * buffer, int length, char chr)
 static inline int is_invalid_message(char * buffer, int length)
 {
 
-    int result = strncmp(buffer,"multiuart",sizeof("multiuart"));
+    int result = strncmp(buffer,"multiuart",strlen("multiuart"));
+    LOG_DEBUG("result:%d",result);
     if(result != 0)
     {
         return 1;
     }
     int chrtimes = strchrtimes(buffer,length,'#');
+    LOG_DEBUG("chrtimes:%d",chrtimes);
     if(chrtimes < 3)
     {
         return 1;
@@ -181,7 +181,7 @@ static inline uart_dev_t * get_dev_by_name(char * name)
 static inline void process_message_invalid_name(int client, char * name)
 {
     char  buffer[128];
-    sprintf(buffer,"multiuart#%s#InvalidName:%s",name,name);
+    sprintf(buffer,"InvalidName:%s",name);
     write(client,buffer,strlen(buffer) + 1);
 }
 
@@ -207,28 +207,35 @@ void * socket_uart_send_manager(void * arg)
             unlink(UNIX_SOCKET_UART_SEND);  
             exit(-1);
         }  
+        LOG_DEBUG("I accpet a message");
         int n = 0;
         uint8_t recv_buf[MAX_BUFSIZ];   
         if( (n = read(com_fd,recv_buf,sizeof(recv_buf))) < 0)
         {
             LOG_ERROR("[%s] Read Error\n",__func__);
+            exit(-1);
         }
+        LOG_DEBUG("I read a message: %s##########",recv_buf);
         if(is_invalid_message((char *)recv_buf, n))
         {
+            LOG_ERROR("InvalidMessage");
             process_message_invalid_message(com_fd);
             close(com_fd);
         }
         else
         {
 	        message_t * message = deserialized_message(recv_buf,n);
+            view_message(message);
             uart_dev_t * dev = get_dev_by_name(message->name);
 	        if(dev == NULL)
 	        {
+                LOG_ERROR("InvalidName");
 	            process_message_invalid_name(com_fd, message->name);
 	            close(com_fd);
 	        }
 	        else
 	        {
+                LOG_DEBUG("validMessage");
                 message->dev = dev;
 	            queue_enqueue(context->send_queue, message);
                 process_message_succeed(com_fd);
@@ -323,6 +330,7 @@ void * socket_uart_recv_manager(void * arg)
         {
             LOG_ERROR("[%s] Read Error\n",__func__);
         }
+        LOG_DEBUG("################%s,%d############\n",recv_buf,n);
         if(is_invalid_message((char *)recv_buf, n))
         {
             process_message_invalid_message(com_fd);
@@ -331,6 +339,7 @@ void * socket_uart_recv_manager(void * arg)
         else
         {
 	        message_t * message = deserialized_message(recv_buf,n);
+            view_message(message);
             uart_dev_t * dev = get_dev_by_name(message->name);
 	        if(dev == NULL)
 	        {

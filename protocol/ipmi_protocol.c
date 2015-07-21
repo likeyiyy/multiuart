@@ -12,7 +12,7 @@
 #include "llog.h"
 #include "raw_uart.h"
 #include "ipmi_protocol.h"
-#define     MAX_BUFSIZ      1024
+#include "multiuart_common.h"
 #define     MsgBufferSize   2048
 
 #define ENABLE              1
@@ -21,15 +21,13 @@
 static inline int compare_message(message_t * message, recv_header_t * recv_header)
 {
     common_header_t * common_header = (common_header_t *)message->data;
-#if 0
-    LOG_NOTICE(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
-    LOG_NOTICE("slave_addr  : %02x slave_addr  : %02x\n",common_header->slave_addr,recv_header->slaver_addr);
-    LOG_NOTICE("master_addr : %02x master_addr : %02x\n",common_header->master_addr,recv_header->master_addr);
-    LOG_NOTICE("function    : %02x function    : %02x\n",common_header->netfn_rslun,recv_header->function << 2);
-    LOG_NOTICE("seq         : %02x seq         : %02x\n",common_header->rqseq_rqlun,recv_header->seq);
-    LOG_NOTICE(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
-#endif 
-    if((common_header->slave_addr  == recv_header->slaver_addr)&&
+    LOG_DEBUG(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+    LOG_DEBUG("slave_addr  : %02x slave_addr  : %02x",common_header->slaver_addr,recv_header->slaver_addr);
+    LOG_DEBUG("master_addr : %02x master_addr : %02x",common_header->master_addr,recv_header->master_addr);
+    LOG_DEBUG("function    : %02x function    : %02x",common_header->netfn_rslun,recv_header->function << 2);
+    LOG_DEBUG("seq         : %02x seq         : %02x",common_header->rqseq_rqlun,recv_header->seq);
+    LOG_DEBUG(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+    if((common_header->slaver_addr  == recv_header->slaver_addr)&&
        (common_header->master_addr == recv_header->master_addr)&&
        (common_header->netfn_rslun == recv_header->function << 2 ) && 
       ((common_header->rqseq_rqlun & 0x80) == recv_header->seq))
@@ -38,10 +36,12 @@ static inline int compare_message(message_t * message, recv_header_t * recv_head
         {
             if(common_header->command == recv_header->command->command[i])
             {
+                LOG_DEBUG("yes we found a one");
                 return 0;
             }
         }
     }
+    LOG_DEBUG("finally, we not found it");
     return 1;
 }
 
@@ -153,6 +153,7 @@ int ipmi_socket_recv_handler(uart_dev_t * dev,
                             message_t ** fit)
 {
     uint8_t * recv_buf = message->data;
+    int n = message->length;
     recv_header_t recv_header_body = *(recv_header_t *)recv_buf;
     recv_header_t * recv_header = &recv_header_body;
     command_t * command = malloc(sizeof(command_t));
@@ -160,22 +161,34 @@ int ipmi_socket_recv_handler(uart_dev_t * dev,
     command->nums   = *(char *)(recv_buf + (sizeof(recv_header_t) - sizeof(command_t *)));
     command->command = (uint8_t *)(recv_buf + (sizeof(recv_header_t) - sizeof(command_t *) + 1));
     recv_header->command = command;
-#if 0
-    LOG_ERROR("n:%d\n",n);
-    print_buf(recv_buf, n);
-    LOG_ERROR("[Handler]: index:%02x slaver_addr:%02x master_addr:%02x function:%02x\n",
-          recv_header->index,
+#if 1
+    LOG_DEBUG("###########################################################");
+    LOG_DEBUG("Recv header length : %d",n);
+    LOG_DEBUG("[Handler]: slaver_addr:%02x master_addr:%02x function:%02x",
           recv_header->slaver_addr,
           recv_header->master_addr,
           recv_header->function);
-    LOG_ERROR("command->nums : %d\n",command->nums);
+    LOG_DEBUG("command->nums : %d",command->nums);
+    LOG_DEBUG("###########################################################");
     for(int i = 0; i < command->nums; i++)
     {
-        LOG_ERROR("support command: %02x\n",command->command[i]);
+        LOG_DEBUG("support command: %02x",command->command[i]);
     }
+#endif
+#if 0
+    common_header_t common_header;
+    common_header.slaver_addr = recv_header->slaver_addr;
+    common_header.master_addr = recv_header->master_addr;
+    common_header.netfn_rslun = recv_header->function << 2;
+    common_header.rqseq_rqlun = recv_header->seq & 0x80;
+    common_header.command     = 0xc1;
+    
+    message_t * test = make_message(message->name,&common_header,sizeof(common_header));
+    queue_enqueue(dev->recv_queue, test);
 #endif
     message_t * temp = NULL;
     int qlen = queue_size(dev->recv_queue);
+    LOG_DEBUG("queue_length:%d",qlen);
     for(int i = 0; i < qlen; i++)
     {
         queue_dequeue(dev->recv_queue, (void **)&temp);

@@ -30,7 +30,10 @@ int raw_uart_recv_handler(uart_dev_t * dev)
     return 0;
 }
 
-int raw_socket_recv_handler(uart_dev_t * dev, message_t * message)
+int raw_socket_recv_handler(uart_dev_t * dev,
+                            message_t * message,
+                            message_t ** fit)
 {
     
+    return 0;
 }

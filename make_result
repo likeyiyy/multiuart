@@ -1,0 +1,49 @@
+/TileraMDE422/bin/tile-cc -std=gnu99 -Wall -g  -I./ -I./protocol  -c -o uart_daemon.o uart_daemon.c    
+/TileraMDE422/bin/tile-cc -std=gnu99 -Wall -g  -I./ -I./protocol  -c -o socket_uart.o socket_uart.c    
+socket_uart.c: In function ‘get_dev_by_name’:
+socket_uart.c:172: warning: pointer targets in passing argument 2 of ‘strcmp’ differ in signedness
+/home/zhourr/4.2.2.169597/TileraMDE-4.2.2.169597/tilegx/lib/gcc/bin/../sysroot/usr/include/string.h:143: note: expected ‘const char *’ but argument is of type ‘uint8_t *’
+socket_uart.c: In function ‘socket_uart_send_manager’:
+socket_uart.c:223: warning: pointer targets in passing argument 1 of ‘deserialized_message’ differ in signedness
+message.h:25: note: expected ‘uint8_t *’ but argument is of type ‘char *’
+socket_uart.c:224: warning: pointer targets in passing argument 1 of ‘get_dev_by_name’ differ in signedness
+socket_uart.c:168: note: expected ‘uint8_t *’ but argument is of type ‘char *’
+socket_uart.c: In function ‘socket_uart_recv_manager’:
+socket_uart.c:425: warning: pointer targets in passing argument 3 of ‘accept’ differ in signedness
+/home/zhourr/4.2.2.169597/TileraMDE-4.2.2.169597/tilegx/lib/gcc/bin/../sysroot/usr/include/sys/socket.h:214: note: expected ‘socklen_t * restrict’ but argument is of type ‘int *’
+socket_uart.c:446: warning: pointer targets in passing argument 1 of ‘deserialized_message’ differ in signedness
+message.h:25: note: expected ‘uint8_t *’ but argument is of type ‘char *’
+socket_uart.c:447: warning: pointer targets in passing argument 1 of ‘get_dev_by_name’ differ in signedness
+socket_uart.c:168: note: expected ‘uint8_t *’ but argument is of type ‘char *’
+socket_uart.c: In function ‘socket_uart_init’:
+socket_uart.c:502: warning: control reaches end of non-void function
+/TileraMDE422/bin/tile-cc -std=gnu99 -Wall -g  -I./ -I./protocol  -c -o raw_uart.o raw_uart.c    
+/TileraMDE422/bin/tile-cc -std=gnu99 -Wall -g  -I./ -I./protocol  -c -o llog.o llog.c    
+/TileraMDE422/bin/tile-cc -std=gnu99 -Wall -g  -I./ -I./protocol  -c -o message.o message.c    
+message.c: In function ‘view_message’:
+message.c:44: warning: format ‘%u’ expects type ‘unsigned int’, but argument 2 has type ‘__time_t’
+message.c:44: warning: format ‘%u’ expects type ‘unsigned int’, but argument 3 has type ‘__suseconds_t’
+message.c: In function ‘deserialized_message’:
+message.c:65: warning: pointer targets in passing argument 1 of ‘strtok’ differ in signedness
+/home/zhourr/4.2.2.169597/TileraMDE-4.2.2.169597/tilegx/lib/gcc/bin/../sysroot/usr/include/string.h:348: note: expected ‘char * restrict’ but argument is of type ‘uint8_t *’
+message.c:70: warning: unused variable ‘after’
+message.c:59: warning: unused variable ‘title’
+/TileraMDE422/bin/tile-cc -std=gnu99 -Wall -g  -I./ -I./protocol  -c -o queue.o queue.c    
+/TileraMDE422/bin/tile-cc -std=gnu99 -Wall -g  -I./ -I./protocol  -c -o protocol/ipmi_protocol.o protocol/ipmi_protocol.c    
+protocol/ipmi_protocol.c: In function ‘_ipmi_uart_parser’:
+protocol/ipmi_protocol.c:79: warning: pointer targets in passing argument 2 of ‘make_message’ differ in signedness
+./message.h:24: note: expected ‘uint8_t *’ but argument is of type ‘char *’
+protocol/ipmi_protocol.c: In function ‘ipmi_socket_recv_handler’:
+protocol/ipmi_protocol.c:128: warning: control reaches end of non-void function
+protocol/ipmi_protocol.c: In function ‘ipmi_uart_recv_handler’:
+protocol/ipmi_protocol.c:122: warning: control reaches end of non-void function
+/TileraMDE422/bin/tile-cc -std=gnu99 -Wall -g  -I./ -I./protocol  -c -o protocol/raw_protocol.o protocol/raw_protocol.c    
+protocol/raw_protocol.c: In function ‘raw_socket_recv_handler’:
+protocol/raw_protocol.c:38: warning: control reaches end of non-void function
+/TileraMDE422/bin/tile-cc -std=gnu99 -Wall -g  -I./ -I./protocol  -c -o protocol/proto_manager.o protocol/proto_manager.c    
+/TileraMDE422/bin/tile-cc -std=gnu99 -Wall -g  -I./ -I./protocol  -c -o config.o config.c    
+config.c: In function ‘get_dev_config_from_buffer’:
+config.c:71: warning: no return statement in function returning non-void
+config.c: In function ‘read_config_file’:
+config.c:126: warning: control reaches end of non-void function
+/TileraMDE422/bin/tile-cc   -o uart_daemon uart_daemon.o socket_uart.o raw_uart.o llog.o message.o queue.o protocol/ipmi_protocol.o protocol/raw_protocol.o protocol/proto_manager.o config.o -lgxio -lpthread

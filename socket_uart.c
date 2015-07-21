@@ -66,7 +66,6 @@ static int open_server_socket(const char * domain_file)
 }
 static void * uart_send_worker(void * arg)
 {
-    char * data;
     message_t * message ;
     struct timeval now;
     while(1)
@@ -86,7 +85,7 @@ static void * uart_send_worker(void * arg)
                   __func__,
                   message->data,
                   message->length);
-        print_buf((uint8_t *)message->data, 
+        print_buf(message->data, 
                   message->length);
         //此串口需要串口化
         uart_dev_t * dev = (uart_dev_t *)message->dev;
@@ -113,7 +112,7 @@ static void * uart_send_worker(void * arg)
     return NULL;
 }
 
-static inline int strchrtimes(uint8_t * buffer, int length, uint8_t chr)
+static inline int strchrtimes(char * buffer, int length, char chr)
 {
     int counter = 0;
     for(int i = 0; i < length; i++)
@@ -154,7 +153,7 @@ static inline void process_message_not_fit(int client)
 
 static inline void process_message_fitted(int client, message_t * fit)
 {
-    char buffer[2048] = {0};
+    uint8_t buffer[2048] = {0};
     int  length = 2048;
     serialized_message(fit, buffer, &length);
     write(client, buffer, length);
@@ -209,12 +208,12 @@ void * socket_uart_send_manager(void * arg)
             exit(-1);
         }  
         int n = 0;
-        char recv_buf[MAX_BUFSIZ];   
+        uint8_t recv_buf[MAX_BUFSIZ];   
         if( (n = read(com_fd,recv_buf,sizeof(recv_buf))) < 0)
         {
             LOG_ERROR("[%s] Read Error\n",__func__);
         }
-        if(is_invalid_message(recv_buf, n))
+        if(is_invalid_message((char *)recv_buf, n))
         {
             process_message_invalid_message(com_fd);
             close(com_fd);
@@ -251,9 +250,7 @@ static inline int _read_from_uart(uart_dev_t * dev)
 }
 static inline void * uart_recv_worker(void * arg)
 {
-    uint8_t recv_data = 0;
     int result;
-    char buffer[MAX_BUFSIZ] = {0};
     fd_set readfds;
     int max_fd = 0;
     struct timeval timeout = {5,0};
@@ -332,7 +329,7 @@ void * handler_uart_recv(void * arg)
     socket_uart_t * so_uart = context->so_uart;
     int fd = context->fd;
     int n = 0;
-    uint8_t recv_buf[MAX_BUFSIZ];   
+    char recv_buf[MAX_BUFSIZ];   
     if( (n = read(fd,recv_buf,MAX_BUFSIZ)) < sizeof(recv_header_t) - sizeof(char *))
     {
         LOG_ERROR("[%s] Read Error\n",__func__);
@@ -343,8 +340,8 @@ void * handler_uart_recv(void * arg)
     recv_header_t * recv_header = &recv_header_body;
     command_t * command = malloc(sizeof(command_t));
     assert(command);
-    command->nums   = *(uint8_t *)(recv_buf + (sizeof(recv_header_t) - sizeof(command_t *)));
-    command->command = (uint8_t *)(recv_buf + (sizeof(recv_header_t) - sizeof(command_t *) + 1));
+    command->nums   = *(char *)(recv_buf + (sizeof(recv_header_t) - sizeof(command_t *)));
+    command->command = (char *)(recv_buf + (sizeof(recv_header_t) - sizeof(command_t *) + 1));
 #if 0
     LOG_ERROR("n:%d\n",n);
     print_buf(recv_buf, n);
@@ -362,7 +359,7 @@ void * handler_uart_recv(void * arg)
     recv_header->command = command;
     bucket_t * bucket = &so_uart->bucket[recv_header->index];
     struct blist * found = NULL;
-    uint8_t buffer[] = "LIST NOT FOUND";
+    char buffer[] = "LIST NOT FOUND";
     pthread_mutex_lock(&bucket->lock);
     {
         struct list_head * p, * list;
@@ -387,7 +384,7 @@ void * handler_uart_recv(void * arg)
     {
         message_t * message = (message_t *)found->data;
         uint16_t length = message->length;
-        uint8_t * data     = message->data;
+        char * data     = message->data;
         if(write(fd, data, length) != length)
         {
             LOG_ERROR("found and write back error\n");
@@ -419,11 +416,9 @@ void * socket_uart_recv_manager(void * arg)
                                 uart_recv_worker,
                                 NULL);
     assert(result == 0);
-    int len = -1;
+    socklen_t len = -1;
     struct sockaddr_un clt_addr;  
     int com_fd = -1;
-    struct timeval now;
-    uint8_t buffer[MAX_BUFSIZ];
     while(1)
     {
         len = sizeof(clt_addr);  
@@ -436,12 +431,12 @@ void * socket_uart_recv_manager(void * arg)
             exit(-1);
         }  
         int n = 0;
-        char recv_buf[MAX_BUFSIZ];   
+        uint8_t recv_buf[MAX_BUFSIZ];   
         if( (n = read(com_fd,recv_buf,sizeof(recv_buf))) < 0)
         {
             LOG_ERROR("[%s] Read Error\n",__func__);
         }
-        if(is_invalid_message(recv_buf, n))
+        if(is_invalid_message((char *)recv_buf, n))
         {
             process_message_invalid_message(com_fd);
             close(com_fd);
@@ -504,4 +499,5 @@ int socket_uart_init(config_t * config)
         }
     }
     context->configed = 1;
+    return 0;
 }

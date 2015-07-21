@@ -40,7 +40,7 @@ static inline char * get_variable_value(char * start)
     need_free[var_len] = '\0';
     return need_free;
 }
-static inline int get_dev_config_from_buffer(config_t * config, char * buffer, int file_length)
+static inline void get_dev_config_from_buffer(config_t * config, char * buffer, int file_length)
 {
     char * cur = NULL ;
     int i = 0;
@@ -73,7 +73,6 @@ static inline int get_dev_nums(char * buffer, int file_length)
 {
     int start_times = 0;
     int end_times = 0;
-    int i = 0;
 
     char * cur = NULL ;
     cur = buffer;
@@ -102,9 +101,6 @@ int read_config_file(char * filename, config_t * config)
     VERIFY(config,"config is NULL");
     VERIFY(filename,"filename is NULL");
     FILE * fp = NULL;
-    char * p, *q;
-    char * pname = NULL;
-    int count = 0;
     fp = fopen(filename,"r");
     VERIFY(fp,"%s can not open.",filename);
     LOG_NOTICE("open %s config file SUCCEED",filename);
@@ -127,6 +123,8 @@ int read_config_file(char * filename, config_t * config)
 
     /* 4. get every dev config */
     get_dev_config_from_buffer(config,buffer,file_length);
+
+    return 0;
 }
 
 

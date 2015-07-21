@@ -10,7 +10,6 @@ int init_uart_device(uart_dev_t * dev)
 	int fd = -1;
     int result = -1;
 	struct termios ts;
-	char time_str[30];
 	int rbaud = dev->rbaud;
 	/** Open the device. */
 	fd = open(dev->name, O_RDWR);

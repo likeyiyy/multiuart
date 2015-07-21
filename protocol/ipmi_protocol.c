@@ -60,7 +60,7 @@ int _ipmi_uart_parser(uart_dev_t * dev, int * start )
 
             int length = (end_index + MsgBufferSize - start_index + 1) % MsgBufferSize;
             * start = end_index;
-            char * buffer = malloc(length);
+            uint8_t * buffer = malloc(length);
             VERIFY(buffer, "[%s] ipmi malloc buffer error",dev->name);
             int counter = 0;
             for(int i = start_index; i != (end_index + 1); i = (i + 1) % MsgBufferSize)
@@ -119,12 +119,13 @@ int ipmi_uart_recv_handler(uart_dev_t * dev)
     {
         continue;
     }
+    return 0;
 }
 int ipmi_socket_recv_handler(uart_dev_t * dev, 
                             message_t * message,
-                            message_t ** hit)
+                            message_t ** fit)
 {
-
+    return 0;
 }
 
 #ifdef IPMI_PROTOCOL

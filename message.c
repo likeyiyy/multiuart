@@ -41,7 +41,7 @@ void view_message(message_t * message)
     printf("Title:  %s\n",message->title);
     printf("Name:   %s\n",message->name);
     printf("Length: %d\n",message->length);
-    printf("Stamp:  %u.%u\n",message->stamp.tv_sec, message->stamp.tv_usec);
+    printf("Stamp:  %lu.%lu\n",message->stamp.tv_sec, message->stamp.tv_usec);
     for(int i = 0; i < message->length; i++)
     {
         if(i && i % 16 == 0)
@@ -56,20 +56,19 @@ message_t * deserialized_message(uint8_t * recv_buf, int length)
 {
     int chrtimes = strchrtimes(recv_buf,length,'#');
     char delims[] = "#";
-    char * title = NULL;
     char * length_str = NULL;
     if(chrtimes >= 3)
     {
         message_t * message = malloc(sizeof(message_t));
         VERIFY(message, "message alloc failed");
-        strcpy(message->title, strtok(recv_buf,delims));
+        strcpy(message->title, strtok((char *)recv_buf,delims));
         strcpy(message->name,  strtok(NULL,delims));
         length_str = strtok(NULL,delims);
         message->length = atoi(length_str);
         int header_len = 3 + strlen(message->title) + strlen(message->name) + strlen(length_str);
         int after = length - header_len;
         message->data = malloc(length - header_len);
-        memcpy(message->data, recv_buf + header_len, length - header_len);
+        memcpy(message->data, recv_buf + header_len, after);
         gettimeofday(&message->stamp,NULL);
         return message;
     }

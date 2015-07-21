@@ -126,7 +126,7 @@ static inline int strchrtimes(uint8_t * buffer, int length, uint8_t chr)
     return counter;
 }
 
-static int isInvalidMessage(char * buffer, int length)
+static int is_invalid_message(char * buffer, int length)
 {
 
     int result = strncmp(buffer,"multiuart",sizeof("multiuart"));
@@ -142,12 +142,12 @@ static int isInvalidMessage(char * buffer, int length)
     return 0;
 }
 
-static inline void ProcessMessageInvalidMessage(int client)
+static inline void process_message_invalid_message(int client)
 {
     write(client,"InvalidMessage",strlen("InvalidMessage") + 1);
 }
 
-static inline void ProcessMessageSucceed(int client)
+static inline void process_message_succeed(int client)
 {
     write(client,"SucceedMessage",strlen("SucceedMessage") + 1);
 }
@@ -165,7 +165,7 @@ static uart_dev_t * get_dev_by_name(char * name)
     
 }
 
-static inline void ProcessMessageInvalidName(int client, char * name)
+static inline void process_message_invalid_name(int client, char * name)
 {
     char  buffer[128];
     sprintf(buffer,"InvalidName:%s",name);
@@ -200,9 +200,9 @@ void * socket_uart_send_manager(void * arg)
         {
             LOG_ERROR("[%s] Read Error\n",__func__);
         }
-        if(isInvalidMessage(recv_buf, n))
+        if(is_invalid_message(recv_buf, n))
         {
-            ProcessMessageInvalidMessage(com_fd);
+            process_message_invalid_message(com_fd);
             close(com_fd);
         }
         else
@@ -211,14 +211,14 @@ void * socket_uart_send_manager(void * arg)
             uart_dev_t * dev = get_dev_by_name(message->name);
 	        if(dev == NULL)
 	        {
-	            ProcessMessageInvalidName(com_fd, message->name);
+	            process_message_invalid_name(com_fd, message->name);
 	            close(com_fd);
 	        }
 	        else
 	        {
                 message->dev = dev;
 	            queue_enqueue(context->send_queue, message);
-                ProcessMessageSucceed(com_fd);
+                process_message_succeed(com_fd);
                 close(com_fd);
 	        }
         }
@@ -235,7 +235,7 @@ static inline int _read_from_uart(uart_dev_t * dev)
     }
     return result;
 }
-void * UartRecvWorker(void * arg)
+void * uart_recv_worker(void * arg)
 {
     uint8_t recv_data = 0;
     int result;
@@ -402,7 +402,7 @@ void * socket_uart_recv_manager(void * arg)
     pthread_t real_recv;
     int result = pthread_create(&real_recv,
                                 NULL,
-                                UartRecvWorker,
+                                uart_recv_worker,
                                 NULL);
     assert(result == 0);
     int len = -1;
@@ -428,9 +428,9 @@ void * socket_uart_recv_manager(void * arg)
         {
             LOG_ERROR("[%s] Read Error\n",__func__);
         }
-        if(isInvalidMessage(recv_buf, n))
+        if(is_invalid_message(recv_buf, n))
         {
-            ProcessMessageInvalidMessage(com_fd);
+            process_message_invalid_message(com_fd);
             close(com_fd);
         }
     }

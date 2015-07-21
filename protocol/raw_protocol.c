@@ -25,7 +25,7 @@ int raw_recv_handler(uart_dev_t * dev)
         return -1;
     }
     message_t * message = make_message(dev->name, dev->buffer, result);
-    queue_enqueue(dev->recv_queue, message);
+    uart_recv_enqueue(dev,message);
     pthread_mutex_unlock(&dev->serial_lock);
     return 0;
 }

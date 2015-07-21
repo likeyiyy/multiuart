@@ -78,7 +78,7 @@ int _ipmi_parser(uart_dev_t * dev, int * start )
             VERIFY((counter <= length), "[%s] ipmi counter and length should be same", dev->name);
             message_t * message = make_message(dev->name, buffer, counter);
             //view_message(message);
-            queue_enqueue(dev->recv_queue,message);
+            uart_recv_enqueue(dev,message);
             clear_buffer(dev, start_index, end_index);
             free(buffer);
             return 0;

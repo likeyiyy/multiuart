@@ -80,3 +80,14 @@ int init_uart_device(uart_dev_t * dev)
     			 rbaud);
     return fd;
 }  
+void uart_recv_enqueue(uart_dev_t * device, message_t * message)
+{
+    message_t * oldest_message = NULL;
+    if(queue_full(device->recv_queue))
+    {
+        queue_dequeue(device->recv_queue,(void **)&oldest_message);
+        free_message(oldest_message);
+        LOG_NOTICE("[MULTIUART] %s recv a message and drop", device->name);
+    }
+    queue_enqueue(device->recv_queue, message);
+}

@@ -19,5 +19,6 @@ typedef struct _uart_dev
 
 int raw_uart_send(int fd, message_t * message);
 int init_uart_device(uart_dev_t * device);
+void uart_recv_enqueue(uart_dev_t * device, message_t * message);
 
 #endif

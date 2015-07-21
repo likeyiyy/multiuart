@@ -18,6 +18,33 @@
 #define ENABLE              1
 #define DISABLE             0
 
+static inline int compare_message(message_t * message, recv_header_t * recv_header)
+{
+    common_header_t * common_header = (common_header_t *)message->data;
+#if 0
+    LOG_NOTICE(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
+    LOG_NOTICE("slave_addr  : %02x slave_addr  : %02x\n",common_header->slave_addr,recv_header->slaver_addr);
+    LOG_NOTICE("master_addr : %02x master_addr : %02x\n",common_header->master_addr,recv_header->master_addr);
+    LOG_NOTICE("function    : %02x function    : %02x\n",common_header->netfn_rslun,recv_header->function << 2);
+    LOG_NOTICE("seq         : %02x seq         : %02x\n",common_header->rqseq_rqlun,recv_header->seq);
+    LOG_NOTICE(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
+#endif 
+    if((common_header->slave_addr  == recv_header->slaver_addr)&&
+       (common_header->master_addr == recv_header->master_addr)&&
+       (common_header->netfn_rslun == recv_header->function << 2 ) && 
+      ((common_header->rqseq_rqlun & 0x80) == recv_header->seq))
+    {
+        for(int i = 0; i < recv_header->command->nums; i++)
+        {
+            if(common_header->command == recv_header->command->command[i])
+            {
+                return 0;
+            }
+        }
+    }
+    return 1;
+}
+
 void clear_buffer(uart_dev_t * dev, int start, int end)
 {
     for(int i = start; i != (end + 1); i = (i + 1) % MsgBufferSize)
@@ -125,7 +152,45 @@ int ipmi_socket_recv_handler(uart_dev_t * dev,
                             message_t * message,
                             message_t ** fit)
 {
-    return 0;
+    uint8_t * recv_buf = message->data;
+    recv_header_t recv_header_body = *(recv_header_t *)recv_buf;
+    recv_header_t * recv_header = &recv_header_body;
+    command_t * command = malloc(sizeof(command_t));
+    VERIFY(command,"[MULTIUART]: command malloc failed");
+    command->nums   = *(char *)(recv_buf + (sizeof(recv_header_t) - sizeof(command_t *)));
+    command->command = (uint8_t *)(recv_buf + (sizeof(recv_header_t) - sizeof(command_t *) + 1));
+    recv_header->command = command;
+#if 0
+    LOG_ERROR("n:%d\n",n);
+    print_buf(recv_buf, n);
+    LOG_ERROR("[Handler]: index:%02x slaver_addr:%02x master_addr:%02x function:%02x\n",
+          recv_header->index,
+          recv_header->slaver_addr,
+          recv_header->master_addr,
+          recv_header->function);
+    LOG_ERROR("command->nums : %d\n",command->nums);
+    for(int i = 0; i < command->nums; i++)
+    {
+        LOG_ERROR("support command: %02x\n",command->command[i]);
+    }
+#endif
+    message_t * temp = NULL;
+    int qlen = queue_size(dev->recv_queue);
+    for(int i = 0; i < qlen; i++)
+    {
+        queue_dequeue(dev->recv_queue, (void **)&temp);
+        if(!compare_message(temp,recv_header))
+        {
+            *fit = temp;
+            return 0;
+        }
+        else
+        {
+            queue_enqueue(dev->recv_queue, temp);
+        }
+    }
+    *fit = NULL;
+    return -1;
 }
 
 #ifdef IPMI_PROTOCOL

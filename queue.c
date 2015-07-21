@@ -181,3 +181,47 @@ int queue_size(queue_t * queue)
 {
     return queue->length;
 }
+
+#ifdef QUEUE_TEST
+int main(int argc, char ** argv)
+{
+    int data[100];
+    for(int i = 0; i < 100; i++)
+    {
+        data[i] = i;
+    }
+
+    queue_t * queue = queue_init(8,0);
+    for(int i =0; i < 100; i++)
+    {
+        queue_enqueue(queue, &data[i]);
+    }
+
+    llog_init(LL_NOTICE,stdout);
+
+    int * temp;
+    int qlen = queue_size(queue);
+    for(int i =0; i < qlen; i++)
+    {
+        queue_dequeue(queue,&temp);
+        if(*temp % 2 == 0)
+        {
+        }
+        else
+        {
+            queue_enqueue(queue,temp);
+        }
+        printf("%d ",*temp);
+    }
+    printf("\n");
+    qlen = queue_size(queue);
+    for(int i =0; i < qlen; i++)
+    {
+        queue_dequeue(queue,&temp);
+        queue_enqueue(queue,temp);
+        printf("%d ",*temp);
+    }
+    printf("\n");
+    
+}
+#endif

@@ -7,16 +7,16 @@
 BLOCK_SIZE	protocol/ipmi_protocol.h	35;"	d
 CC	Makefile	/^CC = $(TILERA_ROOT)\/bin\/tile-cc$/;"	m
 CC	Makefile	/^CC = gcc$/;"	m
-CFLAGS	Makefile	/^CFLAGS = -std=gnu99 -Wall -g $(OPT)$/;"	m
+CFLAGS	Makefile	/^CFLAGS = -std=gnu99 -Wall -g $(OPT) -I.\/ -I.\/protocol$/;"	m
 DATA_LEN	protocol/ipmi_protocol.h	14;"	d
 DISABLE	protocol/ipmi_protocol.c	19;"	d	file:
 DISABLE	protocol/ipmi_protocol.h	12;"	d
 ENABLE	protocol/ipmi_protocol.c	18;"	d	file:
 ENABLE	protocol/ipmi_protocol.h	11;"	d
-FORWARD_ADDR	multiuart_common.h	37;"	d
-FORWARD_ADDR	multiuart_common.h	40;"	d
-FORWARD_CMD	multiuart_common.h	44;"	d
+FORWARD_ADDR	protocol/ipmi_protocol.h	39;"	d
+FORWARD_ADDR	protocol/ipmi_protocol.h	42;"	d
 FORWARD_CMD	protocol/ipmi_protocol.h	16;"	d
+FORWARD_CMD	protocol/ipmi_protocol.h	46;"	d
 HEADER_LEN	message.h	11;"	d
 H_LLOG_H	llog.h	9;"	d
 INIT_LIST_HEAD	list.h	/^static inline void INIT_LIST_HEAD(struct list_head *list)$/;"	f
@@ -33,18 +33,18 @@ LOG_TRACE	llog.h	42;"	d
 LOG_WARN	llog.h	30;"	d
 LogLevel	llog.h	/^typedef  enum LogLevel {  $/;"	g
 LogLevel	llog.h	/^}LogLevel;$/;"	t	typeref:enum:LogLevel
-MASTER_ADDR	multiuart_common.h	38;"	d
-MASTER_ADDR	multiuart_common.h	41;"	d
-MAX_BUFSIZ	multiuart_common.h	33;"	d
+MASTER_ADDR	protocol/ipmi_protocol.h	40;"	d
+MASTER_ADDR	protocol/ipmi_protocol.h	43;"	d
+MAX_BUFSIZ	multiuart_common.h	34;"	d
 MAX_BUFSIZ	protocol/ipmi_protocol.c	15;"	d	file:
 MAX_BUFSIZ	protocol/raw_protocol.c	15;"	d	file:
 MsgBufferSize	protocol/ipmi_protocol.c	16;"	d	file:
 OBJS	Makefile	/^OBJS = $(SRCS:%.c=%.o) $/;"	m
 PARALLELIZE	Makefile	/^PARALLELIZE = $(TILERA_ROOT)\/bin\/parallelize$/;"	m
-PSOC_ADDR	multiuart_common.h	35;"	d
+PSOC_ADDR	protocol/ipmi_protocol.h	37;"	d
 SERIALIZE_LOCK_MASK	socket_uart.c	13;"	d	file:
 SERIALIZE_MASK	socket_uart.c	12;"	d	file:
-SRCS	Makefile	/^SRCS = uart_daemon.c socket_uart.c raw_uart.c llog.c$/;"	m
+SRCS	Makefile	/^SRCS = uart_daemon.c socket_uart.c raw_uart.c llog.c \\$/;"	m
 STATUS_CHECKSUM	protocol/ipmi_protocol.h	21;"	d
 STATUS_COMMAND	protocol/ipmi_protocol.h	24;"	d
 STATUS_COMPLETE	protocol/ipmi_protocol.h	25;"	d
@@ -56,8 +56,8 @@ STATUS_RQSEQ	protocol/ipmi_protocol.h	23;"	d
 STATUS_SLAVE_ADDR	protocol/ipmi_protocol.h	22;"	d
 STATUS_START	protocol/ipmi_protocol.h	18;"	d
 STATUS_STOP	protocol/ipmi_protocol.h	27;"	d
-TEMP_CMD	multiuart_common.h	43;"	d
 TEMP_CMD	protocol/ipmi_protocol.h	15;"	d
+TEMP_CMD	protocol/ipmi_protocol.h	45;"	d
 TILE_MONITOR	Makefile	/^TILE_MONITOR = $(TILERA_ROOT)\/bin\/tile-monitor$/;"	m
 TMC_QUEUE_NO_FLAGS	queue.h	4;"	d
 TMC_QUEUE_SINGLE_RECEIVER	queue.h	6;"	d
@@ -67,8 +67,8 @@ UART_MASTER_ADDR	protocol/ipmi_protocol.h	32;"	d
 UART_SLAVE_ADDR	protocol/ipmi_protocol.h	33;"	d
 UART_START	protocol/ipmi_protocol.h	29;"	d
 UART_STOP	protocol/ipmi_protocol.h	30;"	d
-UNIX_SOCKET_UART_RECV	multiuart_common.h	89;"	d
-UNIX_SOCKET_UART_SEND	multiuart_common.h	88;"	d
+UNIX_SOCKET_UART_RECV	multiuart_common.h	44;"	d
+UNIX_SOCKET_UART_SEND	multiuart_common.h	43;"	d
 VERIFY	llog.h	54;"	d
 _CONFIG_H	config.h	9;"	d
 _IPMI_PROTOCOL_H	protocol/ipmi_protocol.h	9;"	d
@@ -86,33 +86,33 @@ __queue	queue.c	/^struct __queue$/;"	s	file:
 _ipmi_uart_parser	protocol/ipmi_protocol.c	/^int _ipmi_uart_parser(uart_dev_t * dev, int * start )$/;"	f
 _read_from_uart	socket_uart.c	/^static inline int _read_from_uart(uart_dev_t * dev)$/;"	f	file:
 _recvhandler	protocol/proto_manager.h	/^typedef struct _recvhandler$/;"	s
-_socket_recv_handler	protocol/proto_manager.h	/^typedef int ( * _socket_recv_handler)(uart_dev_t * dev, message_t * message);$/;"	t
+_socket_recv_handler	protocol/proto_manager.h	/^typedef int ( * _socket_recv_handler)(uart_dev_t * dev, message_t * message, message_t ** fit);$/;"	t
 _uart_dev	raw_uart.h	/^typedef struct _uart_dev$/;"	s
 _uart_recv_handler	protocol/proto_manager.h	/^typedef int ( * _uart_recv_handler)(uart_dev_t * dev);$/;"	t
 blist	list.h	/^struct blist$/;"	s
 buffer	raw_uart.h	/^    unsigned char buffer[3000];$/;"	m	struct:_uart_dev
 clear_buffer	protocol/ipmi_protocol.c	/^void clear_buffer(uart_dev_t * dev, int start, int end)$/;"	f
-command	multiuart_common.h	/^    command_t * command;$/;"	m	struct:__anon11
-command	multiuart_common.h	/^    command_t * command;$/;"	m	struct:__anon9
-command	multiuart_common.h	/^    uint8_t * command;$/;"	m	struct:__anon8
-command	multiuart_common.h	/^    uint8_t command;$/;"	m	struct:__anon12
-command_t	multiuart_common.h	/^}__attribute__((__packed__))command_t;$/;"	t	typeref:struct:__anon8
-common_header_t	multiuart_common.h	/^}__attribute__((__packed__)) common_header_t;$/;"	t	typeref:struct:__anon12
-compare_blist	socket_uart.c	/^static inline int compare_blist(struct blist * node, recv_header_t * recv_header)$/;"	f	file:
-complete	multiuart_common.h	/^    uint8_t complete;$/;"	m	struct:__anon9
+command	protocol/ipmi_protocol.h	/^    command_t * command;$/;"	m	struct:__anon10
+command	protocol/ipmi_protocol.h	/^    command_t * command;$/;"	m	struct:__anon8
+command	protocol/ipmi_protocol.h	/^    uint8_t * command;$/;"	m	struct:__anon7
+command	protocol/ipmi_protocol.h	/^    uint8_t command;$/;"	m	struct:__anon11
+command_t	protocol/ipmi_protocol.h	/^}__attribute__((__packed__))command_t;$/;"	t	typeref:struct:__anon7
+common_header_t	protocol/ipmi_protocol.h	/^}__attribute__((__packed__)) common_header_t;$/;"	t	typeref:struct:__anon11
+compare_message	protocol/ipmi_protocol.c	/^static inline int compare_message(message_t * message, recv_header_t * recv_header)$/;"	f	file:
+complete	protocol/ipmi_protocol.h	/^    uint8_t complete;$/;"	m	struct:__anon8
 config_dev_t	config.h	/^}config_dev_t;$/;"	t	typeref:struct:__anon2
 config_t	config.h	/^}config_t;$/;"	t	typeref:struct:__anon3
 configed	socket_uart.c	/^    int configed;$/;"	m	struct:__anon1	file:
 context	socket_uart.c	/^static socket_context_t * context = &socket_context_body;$/;"	v	file:
-cur_command	multiuart_common.h	/^    uint8_t cur_command;$/;"	m	struct:__anon9
+cur_command	protocol/ipmi_protocol.h	/^    uint8_t cur_command;$/;"	m	struct:__anon8
 cur_index	raw_uart.h	/^    int cur_index;$/;"	m	struct:_uart_dev
 currenttime	llog.c	/^int currenttime(char * currTime)$/;"	f
 data	list.h	/^	char * data;$/;"	m	struct:blist
-data	message.h	/^    uint8_t * data;$/;"	m	struct:__anon7
+data	message.h	/^    uint8_t * data;$/;"	m	struct:__anon12
 dequeue_count	queue.c	/^    uint64_t dequeue_count;$/;"	m	struct:__queue	file:
 dequeue_mutex	queue.c	/^    pthread_mutex_t dequeue_mutex;$/;"	m	struct:__queue	file:
 deserialized_message	message.c	/^message_t * deserialized_message(uint8_t * recv_buf, int length)$/;"	f
-dev	message.h	/^    void * dev;$/;"	m	struct:__anon7
+dev	message.h	/^    void * dev;$/;"	m	struct:__anon12
 dev_nums	config.h	/^    int dev_nums;$/;"	m	struct:__anon3
 dev_nums	socket_uart.c	/^    int dev_nums;$/;"	m	struct:__anon1	file:
 devs	config.h	/^    config_dev_t * devs;$/;"	m	struct:__anon3
@@ -125,10 +125,10 @@ flags	raw_uart.h	/^    int  flags;$/;"	m	struct:_uart_dev
 free_message	message.c	/^void free_message(message_t * message)$/;"	f
 func	protocol/proto_manager.h	/^    _socket_recv_handler func;$/;"	m	struct:__anon5
 func	protocol/proto_manager.h	/^    _uart_recv_handler func;$/;"	m	struct:_recvhandler
-function	multiuart_common.h	/^    uint8_t function;$/;"	m	struct:__anon11
+function	protocol/ipmi_protocol.h	/^    uint8_t function;$/;"	m	struct:__anon10
 getLogLevel	llog.c	/^static char * getLogLevel(LogLevel level)$/;"	f	file:
 get_dev_by_name	socket_uart.c	/^static inline uart_dev_t * get_dev_by_name(char * name)$/;"	f	file:
-get_dev_config_from_buffer	config.c	/^static inline int get_dev_config_from_buffer(config_t * config, char * buffer, int file_length)$/;"	f	file:
+get_dev_config_from_buffer	config.c	/^static inline void get_dev_config_from_buffer(config_t * config, char * buffer, int file_length)$/;"	f	file:
 get_dev_nums	config.c	/^static inline int get_dev_nums(char * buffer, int file_length)$/;"	f	file:
 get_file_length	config.c	/^static inline int get_file_length(FILE * fp)$/;"	f	file:
 get_socket_recv_handler_by_protocol	protocol/proto_manager.c	/^socket_recv_handler * get_socket_recv_handler_by_protocol(char * protocol)$/;"	f
@@ -139,16 +139,16 @@ global_fp	llog.c	/^static FILE * global_fp = NULL;$/;"	v	file:
 global_mutex	llog.c	/^static pthread_mutex_t global_mutex;$/;"	v	file:
 handlers	protocol/proto_manager.h	/^    socket_recv_handler * handlers;$/;"	m	struct:__anon6
 handlers	protocol/proto_manager.h	/^    uart_recv_handler * handlers;$/;"	m	struct:__anon4
-head_checksum	multiuart_common.h	/^    uint8_t head_checksum;$/;"	m	struct:__anon12
-index	multiuart_common.h	/^    uint8_t index;$/;"	m	struct:__anon10
-index	multiuart_common.h	/^    uint8_t index;$/;"	m	struct:__anon11
-index	multiuart_common.h	/^    uint8_t index;$/;"	m	struct:__anon9
+head_checksum	protocol/ipmi_protocol.h	/^    uint8_t head_checksum;$/;"	m	struct:__anon11
+index	protocol/ipmi_protocol.h	/^    uint8_t index;$/;"	m	struct:__anon10
+index	protocol/ipmi_protocol.h	/^    uint8_t index;$/;"	m	struct:__anon8
+index	protocol/ipmi_protocol.h	/^    uint8_t index;$/;"	m	struct:__anon9
 init_uart_device	raw_uart.c	/^int init_uart_device(uart_dev_t * dev)$/;"	f
-ipmi_socket_recv_handler	protocol/ipmi_protocol.c	/^int ipmi_socket_recv_handler(uart_dev_t * dev, message_t * message)$/;"	f
+ipmi_socket_recv_handler	protocol/ipmi_protocol.c	/^int ipmi_socket_recv_handler(uart_dev_t * dev, $/;"	f
 ipmi_uart_recv_handler	protocol/ipmi_protocol.c	/^int ipmi_uart_recv_handler(uart_dev_t * dev)$/;"	f
 is_invalid_message	socket_uart.c	/^static inline int is_invalid_message(char * buffer, int length)$/;"	f	file:
 item_size	queue.c	/^    int item_size;$/;"	m	struct:__queue	file:
-length	message.h	/^    uint16_t length;$/;"	m	struct:__anon7
+length	message.h	/^    uint16_t length;$/;"	m	struct:__anon12
 length	queue.c	/^    unsigned int length;$/;"	m	struct:__queue	file:
 list_add	list.h	/^static inline void list_add(struct list_head *new, struct list_head *head)$/;"	f
 list_add_tail	list.h	/^static inline void list_add_tail(struct list_head *new, struct list_head *head)$/;"	f
@@ -166,28 +166,31 @@ loglevel	llog.c	/^char loglevel[6][10] = {"",$/;"	v
 main	config.c	/^int main(int argc, char ** argv)$/;"	f
 main	message.c	/^int main( int argc, char ** argv )$/;"	f
 main	protocol/ipmi_protocol.c	/^int main( int argc, char ** argv )$/;"	f
+main	queue.c	/^int main(int argc, char ** argv)$/;"	f
 main	uart_daemon.c	/^int main(int argc, char ** argv)$/;"	f
 make_message	message.c	/^message_t * make_message(char * dev_name, uint8_t * recv_buf, int length)$/;"	f
-master_addr	multiuart_common.h	/^    uint8_t master_addr;$/;"	m	struct:__anon11
-master_addr	multiuart_common.h	/^    uint8_t master_addr;$/;"	m	struct:__anon12
-master_addr	multiuart_common.h	/^    uint8_t master_addr;$/;"	m	struct:__anon9
-message	multiuart_common.h	/^    message_t * message;$/;"	m	struct:__anon10
-message_t	message.h	/^}message_t;$/;"	t	typeref:struct:__anon7
+master_addr	protocol/ipmi_protocol.h	/^    uint8_t master_addr;$/;"	m	struct:__anon10
+master_addr	protocol/ipmi_protocol.h	/^    uint8_t master_addr;$/;"	m	struct:__anon11
+master_addr	protocol/ipmi_protocol.h	/^    uint8_t master_addr;$/;"	m	struct:__anon8
+message	protocol/ipmi_protocol.h	/^    message_t * message;$/;"	m	struct:__anon9
+message_t	message.h	/^}message_t;$/;"	t	typeref:struct:__anon12
 name	config.h	/^    char name[16];$/;"	m	struct:__anon2
-name	message.h	/^    char name[16];$/;"	m	struct:__anon7
+name	message.h	/^    char name[16];$/;"	m	struct:__anon12
 name	raw_uart.h	/^    char name[16];$/;"	m	struct:_uart_dev
-netfn_rslun	multiuart_common.h	/^    uint8_t netfn_rslun;$/;"	m	struct:__anon12
+netfn_rslun	protocol/ipmi_protocol.h	/^    uint8_t netfn_rslun;$/;"	m	struct:__anon11
 next	list.h	/^	struct list_head* next; $/;"	m	struct:list_head	typeref:struct:list_head::list_head
 node	queue.c	/^    void ** node;$/;"	m	struct:__queue	file:
 number	protocol/proto_manager.h	/^    int number;$/;"	m	struct:__anon4
 number	protocol/proto_manager.h	/^    int number;$/;"	m	struct:__anon6
-nums	multiuart_common.h	/^    uint8_t nums;$/;"	m	struct:__anon8
+nums	protocol/ipmi_protocol.h	/^    uint8_t nums;$/;"	m	struct:__anon7
 open_server_socket	socket_uart.c	/^static int open_server_socket(const char * domain_file)$/;"	f	file:
-packet_t	multiuart_common.h	/^}__attribute__((__packed__)) packet_t;$/;"	t	typeref:struct:__anon10
+packet_t	protocol/ipmi_protocol.h	/^}__attribute__((__packed__)) packet_t;$/;"	t	typeref:struct:__anon9
 prev	list.h	/^	struct list_head* prev;$/;"	m	struct:list_head	typeref:struct:list_head::list_head
 print_buf	multiuart_common.h	/^static inline void print_buf(uint8_t * message,int length)$/;"	f
+process_message_fitted	socket_uart.c	/^static inline void process_message_fitted(int client, message_t * fit)$/;"	f	file:
 process_message_invalid_message	socket_uart.c	/^static inline void process_message_invalid_message(int client)$/;"	f	file:
 process_message_invalid_name	socket_uart.c	/^static inline void process_message_invalid_name(int client, char * name)$/;"	f	file:
+process_message_not_fit	socket_uart.c	/^static inline void process_message_not_fit(int client)$/;"	f	file:
 process_message_succeed	socket_uart.c	/^static inline void process_message_succeed(int client)$/;"	f	file:
 protocol	config.h	/^    char protocol[16];$/;"	m	struct:__anon2
 protocol	protocol/proto_manager.h	/^    char protocol[16];$/;"	m	struct:__anon5
@@ -202,27 +205,27 @@ queue_full	queue.c	/^int queue_full(queue_t * queue)$/;"	f
 queue_init	queue.c	/^queue_t * queue_init(int log2_entries, uint32_t flags)$/;"	f
 queue_size	queue.c	/^int queue_size(queue_t * queue)$/;"	f
 queue_t	queue.h	/^typedef struct __queue queue_t;                                                                                          $/;"	t	typeref:struct:__queue
-raw_socket_recv_handler	protocol/raw_protocol.c	/^int raw_socket_recv_handler(uart_dev_t * dev, message_t * message)$/;"	f
+raw_socket_recv_handler	protocol/raw_protocol.c	/^int raw_socket_recv_handler(uart_dev_t * dev,$/;"	f
 raw_uart_recv_handler	protocol/raw_protocol.c	/^int raw_uart_recv_handler(uart_dev_t * dev)$/;"	f
 raw_uart_send	raw_uart.c	/^int raw_uart_send(int fd, message_t * message)$/;"	f
 rbaud	config.h	/^    int rbaud;$/;"	m	struct:__anon2
 rbaud	raw_uart.h	/^    int  rbaud;$/;"	m	struct:_uart_dev
 read_config_file	config.c	/^int read_config_file(char * filename, config_t * config)$/;"	f
-recv_function	multiuart_common.h	/^    uint8_t recv_function;$/;"	m	struct:__anon9
-recv_header_t	multiuart_common.h	/^}__attribute__((__packed__)) recv_header_t;$/;"	t	typeref:struct:__anon11
+recv_function	protocol/ipmi_protocol.h	/^    uint8_t recv_function;$/;"	m	struct:__anon8
+recv_header_t	protocol/ipmi_protocol.h	/^}__attribute__((__packed__)) recv_header_t;$/;"	t	typeref:struct:__anon10
 recv_queue	raw_uart.h	/^    queue_t * recv_queue;$/;"	m	struct:_uart_dev
-recv_slave_addr	multiuart_common.h	/^    uint8_t recv_slave_addr;$/;"	m	struct:__anon9
+recv_slave_addr	protocol/ipmi_protocol.h	/^    uint8_t recv_slave_addr;$/;"	m	struct:__anon8
 register_socket_recv_handler	protocol/proto_manager.c	/^int register_socket_recv_handler(char * name, _socket_recv_handler handler)$/;"	f
 register_uart_recv_handler	protocol/proto_manager.c	/^int register_uart_recv_handler(char * name, _uart_recv_handler handler)$/;"	f
-rqseq_rqlun	multiuart_common.h	/^    uint8_t rqseq_rqlun;$/;"	m	struct:__anon12
-send_function	multiuart_common.h	/^    uint8_t send_function;$/;"	m	struct:__anon9
+rqseq_rqlun	protocol/ipmi_protocol.h	/^    uint8_t rqseq_rqlun;$/;"	m	struct:__anon11
+send_function	protocol/ipmi_protocol.h	/^    uint8_t send_function;$/;"	m	struct:__anon8
 send_queue	socket_uart.c	/^    queue_t * send_queue;$/;"	m	struct:__anon1	file:
-send_slave_addr	multiuart_common.h	/^    uint8_t send_slave_addr;$/;"	m	struct:__anon9
-seq	multiuart_common.h	/^    uint8_t seq;$/;"	m	struct:__anon11
+send_slave_addr	protocol/ipmi_protocol.h	/^    uint8_t send_slave_addr;$/;"	m	struct:__anon8
+seq	protocol/ipmi_protocol.h	/^    uint8_t seq;$/;"	m	struct:__anon10
 serial_lock	raw_uart.h	/^    pthread_mutex_t serial_lock;$/;"	m	struct:_uart_dev
 serialized_message	message.c	/^int serialized_message(message_t * message, uint8_t * buffer, int * length)$/;"	f
-slave_addr	multiuart_common.h	/^    uint8_t slave_addr;$/;"	m	struct:__anon12
-slaver_addr	multiuart_common.h	/^    uint8_t slaver_addr;$/;"	m	struct:__anon11
+slave_addr	protocol/ipmi_protocol.h	/^    uint8_t slave_addr;$/;"	m	struct:__anon11
+slaver_addr	protocol/ipmi_protocol.h	/^    uint8_t slaver_addr;$/;"	m	struct:__anon10
 socket_context	protocol/proto_manager.c	/^socket_handlers * socket_context = &socket_handlers_body;$/;"	v
 socket_context_body	socket_uart.c	/^static socket_context_t socket_context_body;$/;"	v	file:
 socket_context_t	socket_uart.c	/^}socket_context_t;$/;"	t	typeref:struct:__anon1	file:
@@ -232,14 +235,14 @@ socket_recv_handler	protocol/proto_manager.h	/^}socket_recv_handler;$/;"	t	typer
 socket_uart_init	socket_uart.c	/^int socket_uart_init(config_t * config)$/;"	f
 socket_uart_recv_manager	socket_uart.c	/^void * socket_uart_recv_manager(void * arg)$/;"	f
 socket_uart_send_manager	socket_uart.c	/^void * socket_uart_send_manager(void * arg)$/;"	f
-stamp	message.h	/^    struct timeval stamp;$/;"	m	struct:__anon7	typeref:struct:__anon7::timeval
-start	multiuart_common.h	/^    uint8_t start;$/;"	m	struct:__anon12
+stamp	message.h	/^    struct timeval stamp;$/;"	m	struct:__anon12	typeref:struct:__anon12::timeval
+start	protocol/ipmi_protocol.h	/^    uint8_t start;$/;"	m	struct:__anon11
 strchrtimes	message.c	/^static inline int strchrtimes(uint8_t * buffer, int length, uint8_t chr)$/;"	f	file:
-strchrtimes	socket_uart.c	/^static inline int strchrtimes(uint8_t * buffer, int length, uint8_t chr)$/;"	f	file:
-title	message.h	/^    char title[16];$/;"	m	struct:__anon7
+strchrtimes	socket_uart.c	/^static inline int strchrtimes(char * buffer, int length, char chr)$/;"	f	file:
+title	message.h	/^    char title[16];$/;"	m	struct:__anon12
 total	queue.c	/^    unsigned int total;$/;"	m	struct:__queue	file:
 uart_context	protocol/proto_manager.c	/^uart_handlers * uart_context = &uart_handlers_body;$/;"	v
-uart_context_t	multiuart_common.h	/^}uart_context_t;$/;"	t	typeref:struct:__anon9
+uart_context_t	protocol/ipmi_protocol.h	/^}uart_context_t;$/;"	t	typeref:struct:__anon8
 uart_dev_t	raw_uart.h	/^}uart_dev_t;$/;"	t	typeref:struct:_uart_dev
 uart_handlers	protocol/proto_manager.h	/^}uart_handlers;$/;"	t	typeref:struct:__anon4
 uart_handlers_body	protocol/proto_manager.c	/^uart_handlers uart_handlers_body = {NULL, 0};$/;"	v

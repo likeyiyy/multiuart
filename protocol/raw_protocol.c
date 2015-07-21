@@ -34,6 +34,11 @@ int raw_socket_recv_handler(uart_dev_t * dev,
                             message_t * message,
                             message_t ** fit)
 {
-    
+    int result = queue_dequeue(dev->recv_queue,(void **)fit);
+    if(result < 0)
+    {
+        *fit = NULL;
+        return -1;
+    }
     return 0;
 }

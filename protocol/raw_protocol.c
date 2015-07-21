@@ -14,7 +14,7 @@
 #include "raw_protocol.h"
 #define     MAX_BUFSIZ      1024
 
-int raw_recv_handler(uart_dev_t * dev)
+int raw_uart_recv_handler(uart_dev_t * dev)
 {
     int result = read(dev->fd, 
                      dev->buffer, 
@@ -28,4 +28,9 @@ int raw_recv_handler(uart_dev_t * dev)
     uart_recv_enqueue(dev,message);
     pthread_mutex_unlock(&dev->serial_lock);
     return 0;
+}
+
+int raw_socket_recv_handler(uart_dev_t * dev, message_t * message)
+{
+    
 }

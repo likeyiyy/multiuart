@@ -64,7 +64,7 @@ static int open_server_socket(const char * domain_file)
     }  
     return listen_fd;
 }
-void * uart_send_worker(void * arg)
+static void * uart_send_worker(void * arg)
 {
     char * data;
     message_t * message ;
@@ -126,7 +126,7 @@ static inline int strchrtimes(uint8_t * buffer, int length, uint8_t chr)
     return counter;
 }
 
-static int is_invalid_message(char * buffer, int length)
+static inline int is_invalid_message(char * buffer, int length)
 {
 
     int result = strncmp(buffer,"multiuart",sizeof("multiuart"));
@@ -144,15 +144,29 @@ static int is_invalid_message(char * buffer, int length)
 
 static inline void process_message_invalid_message(int client)
 {
-    write(client,"InvalidMessage",strlen("InvalidMessage") + 1);
+    write(client,"InvalidMessage",strlen("InvalidMessage"));
+}
+
+static inline void process_message_not_fit(int client)
+{
+    write(client,"NotfitMessage",strlen("NotfitMessage"));
+}
+
+static inline void process_message_fitted(int client, message_t * fit)
+{
+    char buffer[2048] = {0};
+    int  length = 2048;
+    serialized_message(fit, buffer, &length);
+    write(client, buffer, length);
+    free_message(fit);
 }
 
 static inline void process_message_succeed(int client)
 {
-    write(client,"SucceedMessage",strlen("SucceedMessage") + 1);
+    write(client,"SucceedMessage",strlen("SucceedMessage"));
 }
 
-static uart_dev_t * get_dev_by_name(char * name)
+static inline uart_dev_t * get_dev_by_name(char * name)
 {
     for(int i = 0; i < context->dev_nums; i++)
     {
@@ -168,7 +182,7 @@ static uart_dev_t * get_dev_by_name(char * name)
 static inline void process_message_invalid_name(int client, char * name)
 {
     char  buffer[128];
-    sprintf(buffer,"InvalidName:%s",name);
+    sprintf(buffer,"multiuart#%s#InvalidName:%s",name,name);
     write(client,buffer,strlen(buffer) + 1);
 }
 
@@ -235,7 +249,7 @@ static inline int _read_from_uart(uart_dev_t * dev)
     }
     return result;
 }
-void * uart_recv_worker(void * arg)
+static inline void * uart_recv_worker(void * arg)
 {
     uint8_t recv_data = 0;
     int result;
@@ -275,8 +289,8 @@ void * uart_recv_worker(void * arg)
             {
                 if(FD_ISSET(context->devs[i].fd, &readfds))
                 {
-                    RecvHandler * ProcessRecv = get_recv_handler_by_protocol(context->devs[i].protocol);
-                    ProcessRecv->func(&context->devs[i]);                    
+                    uart_recv_handler * process_uart_recv = get_uart_recv_handler_by_protocol(context->devs[i].protocol);
+                    process_uart_recv->func(&context->devs[i]);                    
                 }
             }
         }
@@ -408,7 +422,6 @@ void * socket_uart_recv_manager(void * arg)
     int len = -1;
     struct sockaddr_un clt_addr;  
     int com_fd = -1;
-    message_t * message ;
     struct timeval now;
     uint8_t buffer[MAX_BUFSIZ];
     while(1)
@@ -433,14 +446,40 @@ void * socket_uart_recv_manager(void * arg)
             process_message_invalid_message(com_fd);
             close(com_fd);
         }
+        else
+        {
+	        message_t * message = deserialized_message(recv_buf,n);
+            uart_dev_t * dev = get_dev_by_name(message->name);
+	        if(dev == NULL)
+	        {
+	            process_message_invalid_name(com_fd, message->name);
+	            close(com_fd);
+	        }
+            else
+            {
+                message_t * fit = NULL;
+                socket_recv_handler * process_socket_recv = get_socket_recv_handler_by_protocol(dev->protocol);
+                process_socket_recv->func(dev, message, &fit);
+                if(fit == NULL)
+                {
+                    process_message_not_fit(com_fd);
+                }
+                else
+                {
+                    process_message_fitted(com_fd, fit);
+                }
+                free_message(message);
+                close(com_fd);
+            }
+        }
     }
     return NULL;
 }
 int socket_uart_init(config_t * config)
 {
-    VERIFY(context,"socket context is NULL");
-    VERIFY(config,"socket config is NULL");
-    VERIFY(config->devs,"config devs is NULL");
+    VERIFY(context, "socket context is NULL");
+    VERIFY(config,  "socket config is NULL");
+    VERIFY(config->devs, "config devs is NULL");
 
     context->devs = malloc(sizeof(uart_dev_t) * config->dev_nums);
     context->dev_nums = config->dev_nums;

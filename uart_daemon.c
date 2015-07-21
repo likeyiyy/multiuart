@@ -6,6 +6,7 @@
  ************************************************************************/
 
 #include "multiuart_common.h"
+#include "llog.h"
 #include "config.h"
 #include "raw_uart.h"
 #include "protocol/ipmi_protocol.h"
@@ -38,9 +39,12 @@ int main(int argc, char ** argv)
     {
         LOG_ERROR("[MULTIUART]: You must specify the configuration file");
     }
+    llog_init(LL_DEBUG, stdout);
 
-    register_recv_handler("ipmi",ipmi_recv_handler);
-    register_recv_handler("raw", raw_recv_handler);
+    register_uart_recv_handler("ipmi",ipmi_uart_recv_handler);
+    register_uart_recv_handler("raw", raw_uart_recv_handler);
+    register_socket_recv_handler("ipmi",ipmi_socket_recv_handler);
+    register_socket_recv_handler("raw", raw_socket_recv_handler);
     
     
     pthread_t send_deamon,recv_deamon;

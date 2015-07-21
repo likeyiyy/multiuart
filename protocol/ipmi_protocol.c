@@ -25,7 +25,7 @@ void clear_buffer(uart_dev_t * dev, int start, int end)
         dev->buffer[i] = 0;
     }
 }
-int _ipmi_parser(uart_dev_t * dev, int * start )
+int _ipmi_uart_parser(uart_dev_t * dev, int * start )
 {
     uint8_t curchar;
     int start_index = 0;
@@ -77,7 +77,7 @@ int _ipmi_parser(uart_dev_t * dev, int * start )
             }
             VERIFY((counter <= length), "[%s] ipmi counter and length should be same", dev->name);
             message_t * message = make_message(dev->name, buffer, counter);
-            //view_message(message);
+            view_message(message);
             uart_recv_enqueue(dev,message);
             clear_buffer(dev, start_index, end_index);
             free(buffer);
@@ -94,7 +94,7 @@ int _ipmi_parser(uart_dev_t * dev, int * start )
     }
 
 }
-int ipmi_recv_handler(uart_dev_t * dev)
+int ipmi_uart_recv_handler(uart_dev_t * dev)
 {
     int result = read(dev->fd, 
                      &dev->buffer[dev->cur_index], 
@@ -115,10 +115,16 @@ int ipmi_recv_handler(uart_dev_t * dev)
         dev->cur_index -= MsgBufferSize;
     }
     int start = 0;
-    while(!_ipmi_parser(dev,&start))
+    while(!_ipmi_uart_parser(dev,&start))
     {
         continue;
     }
+}
+int ipmi_socket_recv_handler(uart_dev_t * dev, 
+                            message_t * message,
+                            message_t ** hit)
+{
+
 }
 
 #ifdef IPMI_PROTOCOL
@@ -148,7 +154,7 @@ int main( int argc, char ** argv )
     dev->buffer[1890] = UART_START;
     dev->recv_queue = queue_init(8,0);
     int start = 0;
-    while(!_ipmi_parser(dev,&start))
+    while(!_ipmi_uart_parser(dev,&start))
     {
         continue;
     }

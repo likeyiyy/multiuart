@@ -71,28 +71,29 @@ message_t * deserialized_message(uint8_t * recv_buf, int length)
         message->data = malloc(length - header_len);
         memcpy(message->data, recv_buf + header_len, length - header_len);
         gettimeofday(&message->stamp,NULL);
-        //view_message(message);
         return message;
     }
     return NULL;
 }
-#if 1
 int serialized_message(message_t * message, uint8_t * buffer, int * length)
 {
-
-    /* payload length */
-    VERIFY(message->length > *length - HEADER_LEN, 
-            "[MULTIUART] message.length should be equal length -3");
-    *(uint16_t *)(buffer + 1) = message->length;
-    memcpy(buffer + HEADER_LEN, message->data, *length - HEADER_LEN);
-    *length = message->length + 3;
+    char temp[64];
+    sprintf(temp,"%s#%s#%d#",message->title,
+                             message->name,
+                             message->length);
+    int temp_len = strlen(temp);
+    VERIFY((*length >= temp_len + message->length), 
+           "length must bigger than message length and header");
+    memcpy(buffer,temp,temp_len);
+    memcpy(buffer + temp_len, message->data, message->length);
+    *length = temp_len + message->length;
+    return 0;
 }
 void free_message(message_t * message)
 {
     free(message->data);
     free(message);
 }
-#endif
 
 #ifdef MESSAGE_DEBUG
 int main( int argc, char ** argv )
@@ -102,8 +103,11 @@ int main( int argc, char ** argv )
     char data[] = "hello world I am very happy with you now, and soon, but hahah eryi.";
     sprintf(buffer,"multiuart#/dev/ttyUSB2#%d#%s",strlen(data),data);
     int length    = strlen(buffer);
-    deserialized_message(buffer, length);
-    sprintf(buffer,"multiuart#/dev/ttyUSB2#%d#%s",strlen(data),data);
     printf("%s\n",buffer);
+    message_t * message =  deserialized_message(buffer, length);
+    view_message(message);
+    char buffer2[1024];
+    serialized_message(message, buffer2, &length);
+    printf("%s:%d\n",buffer2,length);
 }
 #endif

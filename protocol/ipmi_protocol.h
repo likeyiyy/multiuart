@@ -34,6 +34,8 @@
 #define UART_COMPLETE       0x00
 #define BLOCK_SIZE          3
 
-int ipmi_recv_handler(uart_dev_t * dev);
+int ipmi_uart_recv_handler(uart_dev_t * dev);
+int ipmi_socket_recv_handler(uart_dev_t * dev, message_t * message,
+                            message_t ** hit);
 
 #endif

@@ -12,10 +12,13 @@ CC = gcc
 
 endif
 
-CFLAGS = -std=gnu99 -Wall -g $(OPT)
+CFLAGS = -std=gnu99 -Wall -g $(OPT) -I./ -I./protocol
 LIBS = -lgxio -lpthread
 
-SRCS = uart_daemon.c socket_uart.c raw_uart.c llog.c
+SRCS = uart_daemon.c socket_uart.c raw_uart.c llog.c \
+	   message.c queue.c protocol/ipmi_protocol.c \
+	   protocol/raw_protocol.c protocol/proto_manager.c \
+	   config.c
 
 OBJS = $(SRCS:%.c=%.o) 
 
@@ -23,7 +26,7 @@ $(OBJS): %.o : %.c
 	$(CC) $(CFLAGS) $(XFLAGS) -c -o $@ $<    
 
 
-uart_daemon: uart_daemon.o socket_uart.o raw_uart.o llog.o
+uart_daemon: $(OBJS)
 	$(CC) $(LDFLAGS) $(XFLAGS) -o $@ $^ $(LIBS)
 
 all: $(OBJS) uart_daemon

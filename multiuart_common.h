@@ -43,6 +43,7 @@ extern uint32_t request_size ;
 #define UNIX_SOCKET_UART_SEND  "/tmp/socket_uart_send.domain"
 #define UNIX_SOCKET_UART_RECV  "/tmp/socket_uart_recv.domain"
 
+#if 0
 static inline void print_buf(uint8_t * message,int length)
 {
     for(int i = 0; i < length; i++)
@@ -56,6 +57,7 @@ static inline void print_buf(uint8_t * message,int length)
     LOG_DEBUG("\n");
 
 }
+#endif
 
 
 #include "raw_uart.h"

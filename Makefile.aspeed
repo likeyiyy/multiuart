@@ -1,18 +1,8 @@
 # Default target.
 all:
 
-ifdef TILERA_ROOT
-
-CC = $(TILERA_ROOT)/bin/tile-cc
-TILE_MONITOR = $(TILERA_ROOT)/bin/tile-monitor
-PARALLELIZE = $(TILERA_ROOT)/bin/parallelize
-LIBS = -lgxio -lpthread
-else
-
-CC = gcc
+CC = arm-aspeed-linux-gnu-gcc
 LIBS = -lpthread
-
-endif
 
 CFLAGS = -std=gnu99 -Wall -g $(OPT) -I./ -I./protocol
 

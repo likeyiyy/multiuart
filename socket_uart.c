@@ -285,7 +285,7 @@ static inline void * uart_recv_worker(void * arg)
         }
         else if(result == 0)
         {
-		    LOG_NOTICE("[MULTIUART]: Host read the packets timeout");
+		    LOG_DEBUG("[MULTIUART]: Host read the packets timeout");
         }
         else
         {

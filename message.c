@@ -42,15 +42,19 @@ void view_message(message_t * message)
     LOG_NOTICE("Name:   %s",message->name);
     LOG_NOTICE("Length: %d",message->length);
     LOG_NOTICE("Stamp:  %lu.%lu",message->stamp.tv_sec, message->stamp.tv_usec);
+    char temp[128];
+    int counter = 0;
     for(int i = 0; i < message->length; i++)
     {
         if(i && i % 16 == 0)
         {
-            printf("\n");
+            LOG_NOTICE("%s",temp);
+            counter = 0;
         }
-        printf("%02x ",message->data[i]);
+        sprintf(temp + counter, "%02x ",message->data[i]);
+        counter += 3;
     }
-    printf("\n");
+    LOG_NOTICE("%s",temp);
 }
 message_t * deserialized_message(uint8_t * recv_buf, int length)
 {

@@ -22,10 +22,11 @@ static inline int compare_message(message_t * message, recv_header_t * recv_head
 {
     common_header_t * common_header = (common_header_t *)message->data;
     LOG_DEBUG(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
-    LOG_DEBUG("slave_addr  : %02x slave_addr  : %02x",common_header->slaver_addr,recv_header->slaver_addr);
-    LOG_DEBUG("master_addr : %02x master_addr : %02x",common_header->master_addr,recv_header->master_addr);
-    LOG_DEBUG("function    : %02x function    : %02x",common_header->netfn_rslun,recv_header->function << 2);
-    LOG_DEBUG("seq         : %02x seq         : %02x",common_header->rqseq_rqlun,recv_header->seq);
+    LOG_DEBUG("slave_addr  : %02x r.slave_addr  : %02x",common_header->slaver_addr,recv_header->slaver_addr);
+    LOG_DEBUG("master_addr : %02x r.master_addr : %02x",common_header->master_addr,recv_header->master_addr);
+    LOG_DEBUG("function    : %02x r.function    : %02x",common_header->netfn_rslun,recv_header->function << 2);
+    LOG_DEBUG("seq         : %02x r.seq         : %02x",common_header->rqseq_rqlun,recv_header->seq);
+    LOG_DEBUG("command     : %02x ",common_header->command);
     LOG_DEBUG(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
     if((common_header->slaver_addr  == recv_header->slaver_addr)&&
        (common_header->master_addr == recv_header->master_addr)&&
@@ -174,17 +175,6 @@ int ipmi_socket_recv_handler(uart_dev_t * dev,
     {
         LOG_DEBUG("support command: %02x",command->command[i]);
     }
-#endif
-#if 0
-    common_header_t common_header;
-    common_header.slaver_addr = recv_header->slaver_addr;
-    common_header.master_addr = recv_header->master_addr;
-    common_header.netfn_rslun = recv_header->function << 2;
-    common_header.rqseq_rqlun = recv_header->seq & 0x80;
-    common_header.command     = 0xc1;
-    
-    message_t * test = make_message(message->name,&common_header,sizeof(common_header));
-    queue_enqueue(dev->recv_queue, test);
 #endif
     message_t * temp = NULL;
     int qlen = queue_size(dev->recv_queue);

@@ -12,19 +12,22 @@
 #include "llog.h"
 #include "raw_uart.h"
 #include "raw_protocol.h"
-#define     MAX_BUFSIZ      1024
+#define     MAX_BUFSIZ      4096
 
 int raw_uart_recv_handler(uart_dev_t * dev)
 {
-    int result = read(dev->fd, 
-                     dev->buffer, 
-                     MAX_BUFSIZ);
-    if(result < 0)
+    int result = -1;
+    int cur_index = 0;
+    for(int i = 0; i < 50; i++)
     {
-        LOG_ERROR("[MULTIUART]: read from uart error %s",dev->name);
-        return -1;
+        result = read(dev->fd, 
+                      dev->buffer + cur_index, 
+                      MAX_BUFSIZ);
+        LOG_DEBUG("[RAW_UART_RECV]: this %d times read %d bytes",i,result);
+        cur_index += result;
+        usleep(10*1000);
     }
-    message_t * message = make_message(dev->name, dev->buffer, result);
+    message_t * message = make_message(dev->name, dev->buffer, cur_index);
     uart_recv_enqueue(dev,message);
     pthread_mutex_unlock(&dev->serial_lock);
     return 0;

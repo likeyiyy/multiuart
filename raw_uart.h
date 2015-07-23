@@ -13,7 +13,7 @@ typedef struct _uart_dev
     int  flags;
     pthread_mutex_t serial_lock;
     queue_t * recv_queue;
-    unsigned char buffer[3000];
+    unsigned char buffer[4096];
     int cur_index;
 }uart_dev_t;
 

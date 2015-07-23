@@ -272,7 +272,7 @@ static inline void * uart_recv_worker(void * arg)
             }
             FD_SET(context->devs[i].fd, &readfds);
         }
-        timeout.tv_sec  = 10;
+        timeout.tv_sec  = 1000;
         timeout.tv_usec = 0;
         result = select(max_fd + 1,
                        &readfds,
@@ -348,11 +348,18 @@ void * socket_uart_recv_manager(void * arg)
 	        }
             else
             {
+                struct timeval now;
+                gettimeofday(&now,NULL);
                 message_t * fit = NULL;
                 socket_recv_handler * process_socket_recv = get_socket_recv_handler_by_protocol(dev->protocol);
                 process_socket_recv->func(dev, message, &fit);
-                if(fit == NULL)
+                if((fit == NULL))
                 {
+                    process_message_not_fit(com_fd);
+                }
+                else if((now.tv_sec - fit->stamp.tv_sec) > 10)
+                {
+                    free_message(fit);
                     process_message_not_fit(com_fd);
                 }
                 else
@@ -388,7 +395,7 @@ int socket_uart_init(config_t * config)
         pthread_mutex_init(&context->devs[i].serial_lock, NULL);
         context->devs[i].recv_queue = queue_init(8, TMC_QUEUE_SINGLE_RECEIVER);
         context->devs[i].cur_index = 0;
-        context->devs[i].fd = init_uart_device(&context->devs[i]);
+        VERIFY((context->devs[i].fd = init_uart_device(&context->devs[i])) > 0,"Not Such device");
         if(context->devs[i].fd < 0)
         {
             LOG_ERROR("%s open failed",context->devs[i].name);

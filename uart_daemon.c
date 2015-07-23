@@ -17,7 +17,7 @@ int main(int argc, char ** argv)
     char config_file [256] = { 0 };
     int config_flag = 0;
     config_t config;
-    llog_init(LL_DEBUG, stdout);
+    llog_init(LL_ERROR, stdout);
     for(int i = 1; i < argc; i++)
     {
         char * arg = argv[i];

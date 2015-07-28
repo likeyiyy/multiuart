@@ -81,10 +81,11 @@ static void * uart_send_worker(void * arg)
             free_message(message);
             continue;
         }
-        LOG_DEBUG("[%s] data:%p, length:%d",
+        LOG_DEBUG("############################[%s] data:%p, length:%d",
                   __func__,
                   message->data,
                   message->length);
+        view_message(message);
         //此串口需要串口化
         uart_dev_t * dev = (uart_dev_t *)message->dev;
 
@@ -127,13 +128,11 @@ static inline int is_invalid_message(char * buffer, int length)
 {
 
     int result = strncmp(buffer,"multiuart",strlen("multiuart"));
-    LOG_DEBUG("result:%d",result);
     if(result != 0)
     {
         return 1;
     }
     int chrtimes = strchrtimes(buffer,length,'#');
-    LOG_DEBUG("chrtimes:%d",chrtimes);
     if(chrtimes < 3)
     {
         return 1;
@@ -225,7 +224,6 @@ void * socket_uart_send_manager(void * arg)
         else
         {
 	        message_t * message = deserialized_message(recv_buf,n);
-            view_message(message);
             uart_dev_t * dev = get_dev_by_name(message->name);
 	        if(dev == NULL)
 	        {
@@ -235,7 +233,7 @@ void * socket_uart_send_manager(void * arg)
 	        }
 	        else
 	        {
-                LOG_DEBUG("validMessage");
+                LOG_DEBUG("ValidMessage");
                 message->dev = dev;
 	            queue_enqueue(context->send_queue, message);
                 process_message_succeed(com_fd);
@@ -330,7 +328,6 @@ void * socket_uart_recv_manager(void * arg)
         {
             LOG_ERROR("[%s] Read Error\n",__func__);
         }
-        LOG_DEBUG("################%s,%d############\n",recv_buf,n);
         if(is_invalid_message((char *)recv_buf, n))
         {
             process_message_invalid_message(com_fd);
@@ -339,7 +336,11 @@ void * socket_uart_recv_manager(void * arg)
         else
         {
 	        message_t * message = deserialized_message(recv_buf,n);
+#if 0
+            LOG_DEBUG("XXXXXXXXXXXXXXXXXXXXXXXXXXXX");
             view_message(message);
+            LOG_DEBUG("____________________________");
+#endif
             uart_dev_t * dev = get_dev_by_name(message->name);
 	        if(dev == NULL)
 	        {

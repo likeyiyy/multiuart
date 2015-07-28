@@ -24,15 +24,16 @@ static inline int compare_message(message_t * message, recv_header_t * recv_head
     LOG_DEBUG(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
     LOG_DEBUG("slave_addr  : %02x r.slave_addr  : %02x",common_header->slaver_addr,recv_header->slaver_addr);
     LOG_DEBUG("master_addr : %02x r.master_addr : %02x",common_header->master_addr,recv_header->master_addr);
-    LOG_DEBUG("function    : %02x r.function    : %02x",common_header->netfn_rslun,recv_header->function << 2);
-    LOG_DEBUG("seq         : %02x r.seq         : %02x",common_header->rqseq_rqlun,recv_header->seq);
+    LOG_DEBUG("function    : %02x r.function    : %02x",common_header->netfn_rslun,recv_header->function);
+    LOG_DEBUG("seq         : %02x r.seq         : %02x",common_header->rqseq_rqlun & 0x80,recv_header->seq);
     LOG_DEBUG("command     : %02x ",common_header->command);
     LOG_DEBUG(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
     if((common_header->slaver_addr  == recv_header->slaver_addr)&&
        (common_header->master_addr == recv_header->master_addr)&&
-       (common_header->netfn_rslun == recv_header->function << 2 ) && 
+       (common_header->netfn_rslun == recv_header->function) && 
       ((common_header->rqseq_rqlun & 0x80) == recv_header->seq))
     {
+        LOG_DEBUG("yes 目前为止一切都好");
         for(int i = 0; i < recv_header->command->nums; i++)
         {
             if(common_header->command == recv_header->command->command[i])
@@ -105,7 +106,9 @@ int _ipmi_uart_parser(uart_dev_t * dev, int * start )
             }
             VERIFY((counter <= length), "[%s] ipmi counter and length should be same", dev->name);
             message_t * message = make_message(dev->name, buffer, counter);
+            LOG_DEBUG("[IPMI_UART_RECV]: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
             view_message(message);
+            LOG_DEBUG("[IPMI_UART_RECV]: ************************************");
             uart_recv_enqueue(dev,message);
             clear_buffer(dev, start_index, end_index);
             free(buffer);
@@ -162,23 +165,21 @@ int ipmi_socket_recv_handler(uart_dev_t * dev,
     command->nums   = *(char *)(recv_buf + (sizeof(recv_header_t) - sizeof(command_t *)));
     command->command = (uint8_t *)(recv_buf + (sizeof(recv_header_t) - sizeof(command_t *) + 1));
     recv_header->command = command;
-#if 1
-    LOG_DEBUG("###########################################################");
+    LOG_DEBUG("####################### recv Handler start #########################");
     LOG_DEBUG("Recv header length : %d",n);
     LOG_DEBUG("[Handler]: slaver_addr:%02x master_addr:%02x function:%02x",
           recv_header->slaver_addr,
           recv_header->master_addr,
           recv_header->function);
     LOG_DEBUG("command->nums : %d",command->nums);
-    LOG_DEBUG("###########################################################");
     for(int i = 0; i < command->nums; i++)
     {
         LOG_DEBUG("support command: %02x",command->command[i]);
     }
-#endif
-    message_t * temp = NULL;
     int qlen = queue_size(dev->recv_queue);
     LOG_DEBUG("queue_length:%d",qlen);
+    LOG_DEBUG("####################### recv Handler end #########################");
+    message_t * temp = NULL;
     for(int i = 0; i < qlen; i++)
     {
         queue_dequeue(dev->recv_queue, (void **)&temp);

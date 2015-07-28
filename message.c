@@ -38,23 +38,23 @@ static inline int strchrtimes(uint8_t * buffer, int length, uint8_t chr)
 }
 void view_message(message_t * message)
 {
-    LOG_NOTICE("Title:  %s",message->title);
-    LOG_NOTICE("Name:   %s",message->name);
-    LOG_NOTICE("Length: %d",message->length);
-    LOG_NOTICE("Stamp:  %lu.%lu",message->stamp.tv_sec, message->stamp.tv_usec);
+    LOG_DEBUG("Title:  %s",message->title);
+    LOG_DEBUG("Name:   %s",message->name);
+    LOG_DEBUG("Length: %d",message->length);
+    LOG_DEBUG("Stamp:  %lu.%lu",message->stamp.tv_sec, message->stamp.tv_usec);
     char temp[128];
     int counter = 0;
     for(int i = 0; i < message->length; i++)
     {
         if(i && i % 16 == 0)
         {
-            LOG_NOTICE("%s",temp);
+            LOG_DEBUG("%s",temp);
             counter = 0;
         }
         sprintf(temp + counter, "%02x ",message->data[i]);
         counter += 3;
     }
-    LOG_NOTICE("%s",temp);
+    LOG_DEBUG("%s",temp);
 }
 message_t * deserialized_message(uint8_t * recv_buf, int length)
 {

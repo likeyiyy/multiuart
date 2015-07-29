@@ -196,6 +196,10 @@ int ipmi_socket_recv_handler(uart_dev_t * dev,
     *fit = NULL;
     return -1;
 }
+int ipmi_uart_timeout_handler(uart_dev_t * dev)
+{
+    return 0;
+}
 
 #ifdef IPMI_PROTOCOL
 int main( int argc, char ** argv )

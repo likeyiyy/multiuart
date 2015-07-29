@@ -12,6 +12,7 @@ typedef struct _recvhandler
     char protocol[16];
     _uart_recv_handler func;
 }uart_recv_handler;
+typedef uart_recv_handler uart_timeout_handler;
 typedef struct
 {
     uart_recv_handler * handlers;
@@ -20,7 +21,9 @@ typedef struct
 int register_uart_recv_handler(char * name, _uart_recv_handler handler);
 uart_recv_handler * get_uart_recv_handler_by_protocol(char * protocol);
 
-typedef int ( * _socket_recv_handler)(uart_dev_t * dev, message_t * message, message_t ** fit);
+typedef int ( * _socket_recv_handler)(uart_dev_t * dev, 
+                message_t * message, 
+                message_t ** fit);
 typedef struct 
 {
     char protocol[16];

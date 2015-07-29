@@ -17,6 +17,7 @@ typedef struct
     uart_dev_t * devs;
     int dev_nums;
     queue_t * send_queue;
+    int * recv_flag;
     int configed;
 }socket_context_t;
 
@@ -152,8 +153,8 @@ static inline void process_message_not_fit(int client)
 
 static inline void process_message_fitted(int client, message_t * fit)
 {
-    uint8_t buffer[2048] = {0};
-    int  length = 2048;
+    uint8_t buffer[4096] = {0};
+    int  length = 4096;
     serialized_message(fit, buffer, &length);
     write(client, buffer, length);
     free_message(fit);
@@ -206,7 +207,6 @@ void * socket_uart_send_manager(void * arg)
             unlink(UNIX_SOCKET_UART_SEND);  
             exit(-1);
         }  
-        LOG_DEBUG("I accpet a message");
         int n = 0;
         uint8_t recv_buf[MAX_BUFSIZ];   
         if( (n = read(com_fd,recv_buf,sizeof(recv_buf))) < 0)
@@ -214,7 +214,7 @@ void * socket_uart_send_manager(void * arg)
             LOG_ERROR("[%s] Read Error\n",__func__);
             exit(-1);
         }
-        LOG_DEBUG("I read a message: %s##########",recv_buf);
+        LOG_DEBUG("I read a request message, the request is: %s",recv_buf);
         if(is_invalid_message((char *)recv_buf, n))
         {
             LOG_ERROR("InvalidMessage");
@@ -270,7 +270,7 @@ static inline void * uart_recv_worker(void * arg)
             }
             FD_SET(context->devs[i].fd, &readfds);
         }
-        timeout.tv_sec  = 1000;
+        timeout.tv_sec  = 2;
         timeout.tv_usec = 0;
         result = select(max_fd + 1,
                        &readfds,
@@ -284,6 +284,17 @@ static inline void * uart_recv_worker(void * arg)
         else if(result == 0)
         {
 		    LOG_DEBUG("[MULTIUART]: Host read the packets timeout");
+            for(int i = 0; i < context->dev_nums; i++)
+            {
+                if(context->recv_flag[i] == 1)
+                {
+                    context->recv_flag[i] = 0;
+                    char proto_str[30];
+                    sprintf(proto_str, "%s_timeout", context->devs[i].protocol);
+                    uart_timeout_handler * process_timeout = get_uart_recv_handler_by_protocol(proto_str);
+                    process_timeout->func(&context->devs[i]);
+                }
+            }
         }
         else
         {
@@ -291,6 +302,7 @@ static inline void * uart_recv_worker(void * arg)
             {
                 if(FD_ISSET(context->devs[i].fd, &readfds))
                 {
+                    context->recv_flag[i] = 1;
                     uart_recv_handler * process_uart_recv = get_uart_recv_handler_by_protocol(context->devs[i].protocol);
                     process_uart_recv->func(&context->devs[i]);                    
                 }
@@ -381,8 +393,11 @@ int socket_uart_init(config_t * config)
     VERIFY(config->devs, "config devs is NULL");
 
     context->devs = malloc(sizeof(uart_dev_t) * config->dev_nums);
+    VERIFY(context->devs, "malloc context->devs error");
     context->dev_nums = config->dev_nums;
     context->send_queue = queue_init(8,TMC_QUEUE_SINGLE_RECEIVER);
+    context->recv_flag = malloc(sizeof(int) * config->dev_nums);
+    VERIFY(context->recv_flag, "malloc context->flag error");
 
     for(int i = 0; i < config->dev_nums; i++)
     {

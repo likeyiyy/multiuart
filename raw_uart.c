@@ -12,7 +12,7 @@ int init_uart_device(uart_dev_t * dev)
 	struct termios ts;
 	int rbaud = dev->rbaud;
 	/** Open the device. */
-	fd = open(dev->name, O_RDWR);
+	fd = open(dev->name, O_RDWR | O_NONBLOCK);
 	if (fd < 0)
 	{
 		LOG_ERROR("[MULTIUART]: Open the device %s failed: %s",

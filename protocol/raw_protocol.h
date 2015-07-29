@@ -9,6 +9,7 @@
 #define _RAW_PROTOCOL_H
 
 int raw_uart_recv_handler(uart_dev_t * dev);
+int raw_uart_timeout_handler(uart_dev_t * dev);
 int raw_socket_recv_handler(uart_dev_t * dev, 
                             message_t * message,
                             message_t ** fit);

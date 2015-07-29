@@ -37,6 +37,8 @@ int main(int argc, char ** argv)
 
     register_uart_recv_handler("ipmi",ipmi_uart_recv_handler);
     register_uart_recv_handler("raw", raw_uart_recv_handler);
+    register_uart_recv_handler("raw_timeout", raw_uart_timeout_handler);
+    register_uart_recv_handler("ipmi_timeout",ipmi_uart_timeout_handler);
     register_socket_recv_handler("ipmi",ipmi_socket_recv_handler);
     register_socket_recv_handler("raw", raw_socket_recv_handler);
 

@@ -92,6 +92,7 @@ typedef struct
 }__attribute__((__packed__)) common_header_t;
 
 int ipmi_uart_recv_handler(uart_dev_t * dev);
+int ipmi_uart_timeout_handler(uart_dev_t * dev);
 int ipmi_socket_recv_handler(uart_dev_t * dev, message_t * message,
                             message_t ** hit);
 

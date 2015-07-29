@@ -17,19 +17,28 @@
 int raw_uart_recv_handler(uart_dev_t * dev)
 {
     int result = -1;
-    int cur_index = 0;
-    for(int i = 0; i < 50; i++)
+    int cur_index = dev->cur_index;
+    for(int i = 0; i < 10; i++)
     {
         result = read(dev->fd, 
                       dev->buffer + cur_index, 
-                      MAX_BUFSIZ);
+                      MAX_BUFSIZ - cur_index);
         LOG_DEBUG("[RAW_UART_RECV]: this %d times read %d bytes",i,result);
         cur_index += result;
-        usleep(10*1000);
     }
-    message_t * message = make_message(dev->name, dev->buffer, cur_index);
+    dev->cur_index = cur_index;
+    return 0;
+}
+
+int raw_uart_timeout_handler(uart_dev_t * dev)
+{
+    message_t * message = make_message(dev->name, dev->buffer,dev->cur_index);
+    LOG_DEBUG("xxxxxxxxxx: start");
+    view_message(message);
+    LOG_DEBUG("XXXXXXXXXX: end");
     uart_recv_enqueue(dev,message);
     pthread_mutex_unlock(&dev->serial_lock);
+    dev->cur_index = 0;
     return 0;
 }
 
